@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { runDecision, type DecideResult } from './actions';
+import { rephrase, runDecision, type DecideResult } from './actions';
 
 type Option = { id: string; label: string };
 type Vocab = {
@@ -18,11 +18,20 @@ const legend = 'text-xs uppercase tracking-[0.14em] text-[var(--color-muted)] mb
 export function DecisionForm({ vocab }: { vocab: Vocab }) {
   const [result, setResult] = useState<DecideResult | null>(null);
   const [pending, setPending] = useState(false);
+  const [prose, setProse] = useState<{ prose: string; model: string } | null>(null);
 
   async function onSubmit(formData: FormData) {
     setPending(true);
-    setResult(await runDecision(formData));
+    setProse(null);
+    const decided = await runDecision(formData);
+    setResult(decided);
     setPending(false);
+
+    // Deliberately after the decision is on screen. The rules have already
+    // answered; this only rewords them, and it must never delay the answer.
+    if (decided.ok) {
+      void rephrase(formData).then(setProse).catch(() => setProse(null));
+    }
   }
 
   return (
@@ -138,13 +147,19 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
         {result?.ok === false && (
           <p className="text-sm text-[var(--color-warn)]">{result.error}</p>
         )}
-        {result?.ok && <Result result={result} />}
+        {result?.ok && <Result result={result} prose={prose} />}
       </div>
     </div>
   );
 }
 
-function Result({ result }: { result: Extract<DecideResult, { ok: true }> }) {
+function Result({
+  result,
+  prose,
+}: {
+  result: Extract<DecideResult, { ok: true }>;
+  prose: { prose: string; model: string } | null;
+}) {
   const { decision, explanation, labels } = result;
   const name = (id: string) => labels[id] ?? id;
 
@@ -153,6 +168,15 @@ function Result({ result }: { result: Extract<DecideResult, { ok: true }> }) {
       <header>
         <h2 className="text-4xl font-semibold tracking-tight">{explanation.headline}</h2>
         <p className="mt-2 max-w-prose text-[var(--color-muted)]">{explanation.summary}</p>
+        {prose && (
+          <p className="mt-4 max-w-prose border-l-2 border-[var(--color-line)] pl-4 text-sm leading-relaxed">
+            {prose.prose}
+            <span className="mt-1 block text-[11px] text-[var(--color-muted)]">
+              Reworded by {prose.model}, and checked against the rules that fired. The rules
+              decided; the model only rephrased them.
+            </span>
+          </p>
+        )}
       </header>
 
       {decision.do_first.length > 0 && (

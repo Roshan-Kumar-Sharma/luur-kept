@@ -22,6 +22,40 @@ export type Violation = {
 const BANNED = /\b(antibacterial|antimicrobial|kills?|sanitis|sanitiz|disinfect|hygien|allergen|steriliz|sterilis)/i;
 
 /**
+ * Models routinely write figures as words, and a temperature is the most
+ * dangerous thing one could invent here — "wash it at forty degrees" on a
+ * garment whose ceiling is cold. Normalising these before the scan closes that
+ * hole. Not exhaustive, and does not need to be: it covers the range care
+ * advice actually uses.
+ */
+const NUMBER_WORDS: Record<string, string> = {
+  zero: '0', one: '1', two: '2', three: '3', four: '4', five: '5', six: '6',
+  seven: '7', eight: '8', nine: '9', ten: '10', eleven: '11', twelve: '12',
+  thirteen: '13', fourteen: '14', fifteen: '15', sixteen: '16', seventeen: '17',
+  eighteen: '18', nineteen: '19', twenty: '20', thirty: '30', forty: '40',
+  fifty: '50', sixty: '60', seventy: '70', eighty: '80', ninety: '90',
+};
+
+const TENS = /\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)-(one|two|three|four|five|six|seven|eight|nine)\b/gi;
+
+function normaliseNumbers(text: string): string {
+  return text
+    // Compounds first. Splitting "ninety-five" into 90 and 5 would report a
+    // faithful "95" as invented, which is worse than missing it entirely.
+    .replace(TENS, (_m, tens: string, unit: string) => {
+      const t = Number(NUMBER_WORDS[tens.toLowerCase()] ?? 0);
+      const u = Number(NUMBER_WORDS[unit.toLowerCase()] ?? 0);
+      return String(t + u);
+    })
+    .replace(/\b[a-z]+\b/gi, (word) => NUMBER_WORDS[word.toLowerCase()] ?? word);
+}
+
+/** The distinct figures a piece of text asserts. */
+function numbersIn(text: string): Set<string> {
+  return new Set([...normaliseNumbers(text).matchAll(/\d+(?:\.\d+)?/g)].map((m) => m[0]));
+}
+
+/**
  * The authored rule text behind this decision — and nothing else.
  *
  * Deliberately excludes the ladder's action labels. Including them made the
@@ -101,10 +135,12 @@ export function checkFaithfulness(
 
   /* No figure may appear that is not in an authored rule string. This is what
      stops a model helpfully inventing "wash it at 30°C". */
-  const numbers = numberSupport(kb, decision);
-  for (const match of prose.matchAll(/\b\d+(?:\.\d+)?\b/g)) {
-    const number = match[0];
-    if (!numbers.includes(number)) {
+  /* Compared as whole figures, not as substrings. Matching "4" inside a
+     supporting "47" would let an invented temperature through, which is the
+     one number that actually matters here. */
+  const supported = numbersIn(numberSupport(kb, decision));
+  for (const number of numbersIn(prose)) {
+    if (!supported.has(number)) {
       violations.push({
         kind: 'invented_number',
         detail: `states "${number}", which appears in no rule behind this decision`,

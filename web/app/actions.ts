@@ -1,6 +1,6 @@
 'use server';
 
-import { decide, explain, loadKnowledge } from 'kept';
+import { decide, explain, explainWithModel, loadKnowledge } from 'kept';
 import type { CareDecision, Explanation } from 'kept';
 import { GarmentSchema, SituationSchema, type SoilType } from 'kept';
 
@@ -60,6 +60,23 @@ export async function runDecision(formData: FormData): Promise<DecideResult> {
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+/**
+ * The model phrasing, fetched separately so the decision renders immediately.
+ *
+ * Free-tier models take anywhere from two to twenty seconds and sometimes fail
+ * outright, and none of that should sit between someone pressing the button and
+ * seeing an answer. The rules have already decided; this only rewords them.
+ */
+export async function rephrase(formData: FormData): Promise<{ prose: string; model: string } | null> {
+  const result = await runDecision(formData);
+  if (!result.ok) return null;
+
+  const decision = result.decision;
+  const phrased = await explainWithModel(kb, decision);
+  if (!phrased.used_model) return null;
+  return { prose: phrased.explanation.prose, model: phrased.model ?? 'a language model' };
 }
 
 export async function vocabulary() {

@@ -51,7 +51,7 @@ within_one_step           100.0%
 explanation_faithfulness  100.0%
 ```
 
-**Read [`evals/golden/PROVENANCE.md`](evals/golden/PROVENANCE.md) before quoting
+**Read [`engine/evals/golden/PROVENANCE.md`](engine/evals/golden/PROVENANCE.md) before quoting
 any of those.** The same person wrote the rules and the labels, which makes
 `decision_accuracy` a regression detector rather than evidence of correctness.
 
@@ -88,7 +88,7 @@ than trusting reviewers to notice:
 
 ```
 $ pnpm lint:layers
-  error engine-never-imports-the-model: src/engine/select.ts → src/explain/llm.ts
+  error engine-never-imports-the-model: engine/src/engine/select.ts → engine/src/explain/llm.ts
 ```
 
 ---
@@ -108,7 +108,7 @@ Two things make "no rule can recommend above the ceiling" true by construction
 rather than by convention:
 
 1. **The rule vocabulary cannot say it.** `RuleEffect` in
-   [`src/types/decision.ts`](src/types/decision.ts) has no `raise_ceiling`, no
+   [`engine/src/types/decision.ts`](engine/src/types/decision.ts) has no `raise_ceiling`, no
    `permit`, no `override`. Every operation available to a rule tightens.
 2. **The ceiling is folded in one function with one branch, taking `min()`.** It
    starts at the top of the domestic segment and only descends. The need floor
@@ -118,7 +118,7 @@ Selection is then *the gentlest candidate that still meets the need*, which is
 also what keeps `over_wash_rate` down: airing sorts before washing, so the
 engine cannot recommend a wash when airing would do.
 
-[`test/invariants.test.ts`](test/invariants.test.ts) proves this over thousands
+[`engine/test/invariants.test.ts`](engine/test/invariants.test.ts) proves this over thousands
 of generated garments, not just the golden set — including that adding a fibre
 can only ever lower the ceiling, which is the "five per cent elastane governs
 the whole garment" case stated as a law.
@@ -161,6 +161,22 @@ and every rule is a line of YAML with a `provenance` block waiting for a name.
 
 ---
 
+## Layout
+
+```
+kept/
+├── knowledge/   ← the rules. YAML, cited, editable without touching code.
+│                  Kept at the root deliberately: it is the product, not an
+│                  implementation detail of the engine.
+├── engine/      ← everything that runs. src/, test/, evals/
+└── web/         ← the one screen
+```
+
+Two pnpm workspace packages, `kept` and `kept-web`. The root scripts delegate,
+so every command below is run from the repository root.
+
+---
+
 ## Quickstart
 
 ```bash
@@ -183,11 +199,47 @@ Runs types, layering, the knowledge lint, the tests and the eval gate.
 | `pnpm evals` | The golden set and the metrics above |
 | `pnpm --filter kept-web dev` | The one-screen web app |
 
-No API key is needed for any of it. The explainer is deterministic by default;
-the model path in [`src/explain/llm.ts`](src/explain/llm.ts) is opt-in, and its
-output is checked against the rules that fired before it is shown — an
-unsupported claim, an invented number or an out-of-scope assertion sends the
-whole thing back to the deterministic renderer.
+**No API key is needed for any of it**, including the tests, the evals and CI.
+The explainer is deterministic by default.
+
+---
+
+## The model, and why it barely matters
+
+Add an OpenRouter key to `.env` (see [`.env.example`](.env.example)) and
+`--explain` will have a model reword the reasoning:
+
+```bash
+pnpm kept decide --fibres merino:100 --category knitwear --wears 3 --soil none --explain
+
+IN OTHER WORDS
+  Air it out. Worn 3 times since the last wash, against about 11 for this
+  garment in this situation — it barely holds odour at all. No wash is
+  indicated yet.
+
+  (nex-agi/nex-n2.5-mini:free, checked against the rules that fired)
+```
+
+The free tier is enough, because rephrasing three sentences that a rules engine
+has already decided is the cheapest possible LLM task. Two things about
+[`engine/src/explain/llm.ts`](engine/src/explain/llm.ts) are worth knowing:
+
+**It walks an ordered list of free models rather than using `openrouter/free`.**
+That auto-router picks a different model per call. On three consecutive calls it
+returned good prose once, timed out once, and once routed the job to a
+*content-safety classifier*, which replied `User Safety: safe`. Free models also
+rate-limit upstream without warning, so the list exists to walk past whichever
+one is currently refusing.
+
+**Every response is checked against the rules that fired before it is shown.**
+An unsupported action, an invented number, an out-of-scope claim, or prose that
+never states the recommendation sends the whole thing back to the deterministic
+renderer. The checker normalises number words, so *"wash it at forty degrees"*
+is caught as readily as *"wash it at 40°C"*. The `User Safety: safe` response
+above would have been rejected on the spot.
+
+That is the whole of the model's involvement in Sprint A. It never sees the
+garment, never sees the situation, and never chooses an action.
 
 ---
 
@@ -202,8 +254,12 @@ whole thing back to the deterministic renderer.
 - **Shedding figures are relative rankings, not measurements**, and they count
   fibre released rather than microplastic released — cotton and wool shed
   heavily too, and those fibres are not persistent the way synthetics are.
-- **The model explainer has never run against the live API** in this repository.
-  It is covered by tests with a stubbed client, including its fallback paths.
+- **The model explainer runs on free-tier models, and they are unreliable.**
+  Measured on this task: one candidate returned its own scratchpad as the
+  answer, one returned nothing, and the Gemma models were rate-limited on every
+  attempt. The fallback chain and the faithfulness check mean this degrades to
+  the deterministic wording rather than to a wrong answer, but expect the model
+  phrasing to be absent a fair share of the time.
 - **No label scanning.** Deliberately deferred to Sprint B; the decision engine
   is the differentiator and the vision half is the commodity.
 
@@ -231,9 +287,14 @@ whole thing back to the deterministic renderer.
 Sprint A is complete: the knowledge base, the engine, the explainer, the CLI,
 the web app, the golden set and the CI gate.
 
+**Not yet deployed.** The demo runs locally; a public URL is the one thing
+standing between this and being sendable.
+
 Sprint B: vision extraction of composition and care symbols from a label
 photograph, brand config YAML with SKU mapping, a shareable result page, and the
-golden set expanded with real garments.
+golden set expanded with real garments. The explainer's model chain already
+routes to vision-capable models, so the label-reading half has somewhere to
+land.
 
 ## Licence
 

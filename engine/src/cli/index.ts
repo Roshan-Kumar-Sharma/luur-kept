@@ -4,6 +4,7 @@ import { loadKnowledge } from '../knowledge/load.js';
 import { lintKnowledge, provenanceReport } from '../knowledge/lint.js';
 import { decide } from '../engine/index.js';
 import { render } from '../explain/template.js';
+import { explainWithModel } from '../explain/llm.js';
 import { GarmentSchema, SituationSchema, SOIL_TYPES } from '../types/garment.js';
 
 function parseFibres(input: string): { fibre: string; pct: number }[] {
@@ -45,7 +46,13 @@ program
   .option('--colour <id>', 'white | light | mid | dark')
   .option('--structured', 'has interfacing, shoulder pads or a lining')
   .option('--json', 'emit the full CareDecision as JSON')
-  .action((opts) => {
+  .option(
+    '--explain',
+    'have a language model rephrase the reasoning. Needs OPENROUTER_API_KEY; falls back ' +
+      'to the deterministic wording if the model is unavailable or says anything the rules ' +
+      'do not support',
+  )
+  .action(async (opts) => {
     const kb = loadKnowledge();
 
     const garment = GarmentSchema.parse({
@@ -73,6 +80,24 @@ program
       return;
     }
     console.log(render(kb, decision));
+
+    if (opts.explain) {
+      const result = await explainWithModel(kb, decision);
+      console.log('');
+      if (result.used_model) {
+        console.log('IN OTHER WORDS');
+        console.log(`  ${result.explanation.prose}`);
+        console.log('');
+        console.log(`  (${result.model}, checked against the rules that fired)`);
+      } else {
+        // The deterministic prose is the WHY block above, reflowed. Repeating
+        // it here would pad the output rather than add to it.
+        console.log('No model produced usable prose; the reasoning above stands as written.');
+        for (const attempt of result.attempts ?? []) {
+          console.log(`  · ${attempt.model}: ${attempt.error}`);
+        }
+      }
+    }
   });
 
 program

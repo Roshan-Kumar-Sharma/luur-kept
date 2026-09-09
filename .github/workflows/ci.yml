@@ -27,15 +27,18 @@ jobs:
       - name: Knowledge base — citations, vocabulary, out-of-scope claims
         run: pnpm lint:knowledge
 
+      # No API key is set here on purpose. Everything below must pass without
+      # one: the explainer falls back to the deterministic renderer, and a
+      # decision never depends on a model being reachable.
       - name: Tests, including the care-ceiling property tests
         run: pnpm test
 
       # The gate that matters. `pnpm evals` exits non-zero if
       # damage_avoidance_recall is below 100%, or if it or over_wash_rate has
-      # regressed against evals/baseline.json. Recommending a treatment that
-      # would destroy a garment is not a metric to trade against anything else.
+      # regressed against engine/evals/baseline.json. Recommending a treatment
+      # that would destroy a garment is not a metric to trade against anything.
       - name: Evals — damage_avoidance_recall gate
         run: pnpm evals
 
       - name: Web build
-        run: pnpm --filter kept-web build
+        run: pnpm build

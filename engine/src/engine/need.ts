@@ -27,6 +27,12 @@ export function buildNeed(
   const hits: RuleHit[] = [];
   const unknowns: string[] = [];
   const mods = kb.soils.wear_budget_modifiers;
+  const wornPhrase = (n: number) =>
+    n === 0
+      ? 'Not worn since the last wash'
+      : n === 1
+        ? 'Worn once since the last wash'
+        : `Worn ${n} times since the last wash`;
   const odourPhrase =
     mods.odour_phrases[profile.odour_retention as keyof typeof mods.odour_phrases] ??
     `holds odour ${profile.odour_retention}`;
@@ -138,10 +144,9 @@ export function buildNeed(
         layer: 'need',
         effect: { kind: 'need', floor: 'wear_again' },
         because:
-          `Worn ${situation.wears_since_wash} ` +
-          `time${situation.wears_since_wash === 1 ? '' : 's'} since the last wash, against ` +
-          `about ${budget.toFixed(0)} for this garment in this situation — it ${odourPhrase}. ` +
-          'No wash is indicated yet. ' +
+          `${wornPhrase(situation.wears_since_wash)}, against about ` +
+          `${Math.max(1, Math.round(budget))} for this garment in this situation — ` +
+          `it ${odourPhrase}. No wash is indicated yet. ` +
           mods.within.rationale.trim(),
         sources: mods.within.sources,
         inputs: ['wears_since_wash', 'next_to_skin', 'activity', 'ambient', 'fibres'],
@@ -161,9 +166,12 @@ export function buildNeed(
         layer: 'need',
         effect: { kind: 'need', floor },
         because:
-          `Worn ${situation.wears_since_wash} times since the last wash, against about ` +
-          `${budget.toFixed(1)} for this fibre and construction in this situation. ` +
-          mods.exceeded.rationale.trim(),
+          (budget < 1
+            ? `${wornPhrase(situation.wears_since_wash)}. A garment of this kind, worn ` +
+              `like this, is washed after every wear — it ${odourPhrase}. `
+            : `${wornPhrase(situation.wears_since_wash)}, against about ` +
+              `${Math.round(budget)} for this garment in this situation — ` +
+              `it ${odourPhrase}. `) + mods.exceeded.rationale.trim(),
         sources: mods.exceeded.sources,
         inputs: ['wears_since_wash', 'next_to_skin', 'activity', 'ambient', 'fibres'],
       }),

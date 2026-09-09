@@ -1,44 +1,23 @@
 {
-  "name": "kept",
+  "name": "kept-workspace",
   "version": "0.1.0",
-  "description": "A care decision engine for clothes. Garment + situation in, a care action with its reasoning out. Conservative by construction.",
+  "description": "Kept — a care decision engine for clothes.",
   "license": "Apache-2.0",
+  "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.11"
-  },
-  "bin": {
-    "kept": "./dist/cli/index.js"
+    "node": ">=20.12"
   },
   "scripts": {
-    "kept": "tsx src/cli/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "lint:knowledge": "tsx src/cli/index.ts lint",
-    "lint:layers": "depcruise src --config .dependency-cruiser.cjs",
-    "evals": "tsx evals/run.ts",
-    "check": "pnpm typecheck && pnpm lint:layers && pnpm lint:knowledge && pnpm test && pnpm evals"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.124.0",
-    "commander": "^12.1.0",
-    "yaml": "^2.9.0",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@types/node": "^22.9.0",
-    "dependency-cruiser": "^16.5.0",
-    "fast-check": "^3.23.1",
-    "tsx": "^4.19.2",
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
-  },
-  "main": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./engine": "./src/engine/index.ts",
-    "./knowledge": "./src/knowledge/load.ts"
+    "kept": "pnpm --filter kept kept",
+    "dev": "pnpm --filter kept-web dev",
+    "build": "pnpm --filter kept-web build",
+    "typecheck": "pnpm --filter kept typecheck",
+    "test": "pnpm --filter kept test",
+    "test:watch": "pnpm --filter kept test:watch",
+    "evals": "pnpm --filter kept evals",
+    "lint:knowledge": "pnpm --filter kept lint:knowledge",
+    "lint:layers": "pnpm --filter kept lint:layers",
+    "check": "pnpm --filter kept check && pnpm --filter kept-web build"
   }
 }

@@ -4,4 +4,5 @@ export { lintKnowledge, provenanceReport } from './knowledge/lint.js';
 export { decide } from './engine/index.js';
 export { explain, render, type Explanation } from './explain/template.js';
 export { checkFaithfulness } from './explain/faithfulness.js';
+export { explainWithModel, type LlmExplainResult } from './explain/llm.js';
 export * from './types/index.js';
