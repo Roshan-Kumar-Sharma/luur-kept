@@ -86,15 +86,17 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
     setProse(null);
     setRephraseFailed(false);
 
-    // Without this the answer renders nearly a thousand pixels above the
-    // button that was just pressed, and nothing appears to happen at all.
-    const reduced =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    resultRef.current?.scrollIntoView({
-      behavior: reduced ? 'auto' : 'smooth',
-      block: 'start',
-    });
+    /*
+     * Without this the answer renders around a thousand pixels ABOVE the
+     * button that produced it, so pressing the button appears to do nothing.
+     *
+     * Instant, not smooth, and deliberately so. A smooth scroll is an
+     * animation, and an animation can be throttled — measured here moving 64px
+     * in 1.4 seconds, leaving the answer off-screen and reintroducing the exact
+     * bug this line exists to fix. Landing on the result is the requirement;
+     * gliding there is not.
+     */
+    resultRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
 
     // The rules engine answers in well under a millisecond, so on a warm
     // server the waiting state would otherwise flash past unreadably. This is
