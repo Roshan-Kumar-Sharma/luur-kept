@@ -34,13 +34,8 @@ export type KnowledgeBase = {
   readonly constraints: ConstraintsFile['constraints'];
 };
 
-/**
- * Walk up from this module looking for the knowledge directory, so the same
- * code works under tsx, under vitest and from dist without anyone maintaining
- * a relative path that is wrong in two of the three.
- */
-export function defaultKnowledgeDir(): string {
-  let dir = dirname(fileURLToPath(import.meta.url));
+function searchUpward(from: string): string | null {
+  let dir = from;
   for (let i = 0; i < 8; i++) {
     const candidate = join(dir, 'knowledge');
     if (existsSync(join(candidate, 'ladder.yaml'))) return candidate;
@@ -48,7 +43,48 @@ export function defaultKnowledgeDir(): string {
     if (parent === dir) break;
     dir = parent;
   }
-  throw new Error('could not locate the knowledge/ directory');
+  return null;
+}
+
+/**
+ * Find the knowledge directory.
+ *
+ * Three roots, in order, because one is not enough:
+ *
+ *   KEPT_KNOWLEDGE_DIR   an explicit override, for anyone whose layout is none
+ *                        of the below.
+ *   this module          right under tsx, vitest and dist.
+ *   the process cwd      right in a bundled serverless function, where the
+ *                        module path resolves inside the bundle rather than
+ *                        the repository. Searching only from the module is
+ *                        what broke the first Vercel deployment: the YAML was
+ *                        present and traced correctly, and the loader still
+ *                        could not see it.
+ */
+export function defaultKnowledgeDir(): string {
+  const override = process.env['KEPT_KNOWLEDGE_DIR'];
+  if (override) {
+    if (existsSync(join(override, 'ladder.yaml'))) return override;
+    throw new Error(`KEPT_KNOWLEDGE_DIR is set to "${override}" but has no ladder.yaml`);
+  }
+
+  const roots: string[] = [];
+  try {
+    roots.push(dirname(fileURLToPath(import.meta.url)));
+  } catch {
+    // import.meta.url is not always meaningful once bundled.
+  }
+  roots.push(process.cwd());
+
+  for (const root of roots) {
+    const found = searchUpward(root);
+    if (found) return found;
+  }
+
+  throw new Error(
+    `could not locate the knowledge/ directory. Searched upward from ` +
+      `${roots.map((r) => `"${r}"`).join(' and ')}. Set KEPT_KNOWLEDGE_DIR to point at it.`,
+  );
 }
 
 function readFile<T>(path: string, schema: ZodType<T>): T {

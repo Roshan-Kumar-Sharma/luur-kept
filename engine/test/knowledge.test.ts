@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadKnowledge } from '../src/knowledge/load.js';
+import { defaultKnowledgeDir, loadKnowledge } from '../src/knowledge/load.js';
 import { lintKnowledge, provenanceReport } from '../src/knowledge/lint.js';
 import { CARE_ACTIONS } from '../src/types/ladder.js';
 
@@ -69,5 +69,34 @@ describe('the odour_retention field', () => {
     const byOdour = kb.soils.soils['body_odour']?.need_floor_by_odour_retention;
     expect(byOdour?.very_low).toBe('refresh_spray');
     expect(byOdour?.very_high).toBe('machine_wash_cold');
+  });
+});
+
+describe('finding the knowledge directory', () => {
+  // This broke the first Vercel deployment. The YAML was traced into the
+  // serverless bundle correctly and the loader still could not see it, because
+  // it only searched upward from its own module path — which, once bundled,
+  // points inside the bundle rather than at the repository.
+  it('resolves without an override', () => {
+    expect(() => loadKnowledge(defaultKnowledgeDir())).not.toThrow();
+  });
+
+  it('honours KEPT_KNOWLEDGE_DIR', () => {
+    const real = defaultKnowledgeDir();
+    process.env['KEPT_KNOWLEDGE_DIR'] = real;
+    try {
+      expect(defaultKnowledgeDir()).toBe(real);
+    } finally {
+      delete process.env['KEPT_KNOWLEDGE_DIR'];
+    }
+  });
+
+  it('fails loudly on an override that points nowhere', () => {
+    process.env['KEPT_KNOWLEDGE_DIR'] = '/nonexistent/knowledge';
+    try {
+      expect(() => defaultKnowledgeDir()).toThrow(/no ladder\.yaml/);
+    } finally {
+      delete process.env['KEPT_KNOWLEDGE_DIR'];
+    }
   });
 });
