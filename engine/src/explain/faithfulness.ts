@@ -64,7 +64,7 @@ function numbersIn(text: string): Set<string> {
  */
 function ruleText(decision: CareDecision): string {
   return [
-    ...decision.reasoning.map((h) => h.because),
+    ...decision.reasoning.flatMap((h) => [h.because, h.rationale ?? '']),
     ...decision.never_do.map((c) => `${c.never_do} ${c.because}`),
     ...decision.unknowns,
     decision.impact_estimate.energy_note,

@@ -14,6 +14,7 @@ export function mkHit(
     layer: RuleLayer;
     effect: RuleEffect;
     because: string;
+    rationale?: string;
     sources: readonly string[];
     inputs: readonly string[];
   },
@@ -30,6 +31,7 @@ export function mkHit(
     layer: args.layer,
     effect: args.effect,
     because: args.because,
+    ...(args.rationale ? { rationale: args.rationale } : {}),
     sources,
     inputs: args.inputs,
   };

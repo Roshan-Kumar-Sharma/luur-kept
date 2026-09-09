@@ -63,6 +63,10 @@ body {
   font-size: 14px;
   font-family: inherit;
   transition: border-color 0.15s, box-shadow 0.15s;
+  /* A select's intrinsic width is its longest option, which overflows a narrow
+     grid cell unless it is allowed to shrink. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .control:hover { border-color: var(--color-muted); }
@@ -81,6 +85,12 @@ select.control {
   background-position: right 12px center;
   cursor: pointer;
 }
+
+/* Opt out of the full-width default for controls that sit inline. */
+.control.is-auto { width: auto; }
+/* Grow only. Setting flex-basis here would override Tailwind's basis-*
+   utilities, since this stylesheet is loaded after the Tailwind layer. */
+.control.is-grow { width: auto; min-width: 0; flex-grow: 1; }
 
 input[type="number"].control { text-align: center; }
 input[type="number"].control::-webkit-outer-spin-button,
@@ -190,4 +200,89 @@ input[type="number"].control::-webkit-inner-spin-button { appearance: none; marg
 @media (prefers-reduced-motion: reduce) {
   .skeleton, .dot, .rise { animation: none; }
   .skeleton { background: var(--color-line); }
+}
+
+/* ── Chips, segmented controls, disclosure ──────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 999px;
+  background: var(--color-card);
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--color-muted); }
+.chip[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
+}
+.chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-line) 35%, var(--color-card));
+}
+.seg button {
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.seg button[aria-pressed="true"] {
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+.card {
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-card) 70%, var(--color-paper));
+  padding: 22px;
+}
+
+details.more > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  width: fit-content;
+}
+details.more > summary::-webkit-details-marker { display: none; }
+
+.audit {
+  border-top: 1px solid var(--color-line);
+  padding-top: 18px;
+  font-size: 12.5px;
+  color: var(--color-muted);
+}
+.audit code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--color-faint);
 }

@@ -38,7 +38,7 @@ constraints:
       - { kind: forbid, action: machine_wash_warm }
       - { kind: forbid_param, param: tumble_dry }
     never_do: "Don't wash it warm, and don't tumble dry it."
-    because: "Elastane loses its recovery permanently above about thirty degrees. Nothing looks damaged afterwards — the garment simply stops springing back and never fits the same way again. A garment that is ninety-five per cent cotton is still governed by its five per cent elastane."
+    because: "Elastane loses its recovery permanently above about thirty degrees. Nothing looks damaged afterwards — the garment simply stops springing back and never fits the same way again. A garment that is mostly something else is still governed by its small elastane content."
     sources: [engineer-inference]
 
   - id: never_machine_wash_structured

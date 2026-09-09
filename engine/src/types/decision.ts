@@ -68,8 +68,17 @@ export type RuleHit = {
   readonly rule_id: string;
   readonly layer: RuleLayer;
   readonly effect: RuleEffect;
-  /** Authored prose from YAML. Never generated. */
+  /**
+   * Why this fired, about THIS garment. Consumer-facing; shown on the page.
+   */
   readonly because: string;
+  /**
+   * Why the rule exists at all — the general principle, authored in YAML.
+   * Written for someone auditing the knowledge base, not for someone deciding
+   * about a jumper, so it belongs behind the "show the rules" panel. Keeping
+   * it out of `because` is what stops reviewer prose leaking onto the page.
+   */
+  readonly rationale?: string;
   readonly sources: readonly SourceRef[];
   /** Which input fields the rule read. Used to check explanation faithfulness. */
   readonly inputs: readonly string[];

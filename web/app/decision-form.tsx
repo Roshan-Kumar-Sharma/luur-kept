@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { rephrase, runDecision, type DecideResult } from './actions';
 
 type Option = { id: string; label: string };
@@ -12,354 +12,413 @@ type Vocab = {
   soils: Option[];
 };
 
-/**
- * Why each question is being asked.
- *
- * Every hint says what the answer changes, not what the field is. Someone
- * filling this in has no reason to know that construction affects fibre
- * release — and telling them is the point of the product, so it may as well
- * start in the form.
- */
-const SOIL_HINTS: Record<string, string> = {
-  none: 'Just worn. Nothing on it.',
-  body_odour: 'Whether this can be aired out depends entirely on the fibre.',
-  visible_sweat: 'Salts and oils dried into the cloth. Needs water; rarely needs heat.',
-  food_grease: 'Treated where it landed, before anything else.',
-  smoke: 'Absorbed smells usually leave on their own with enough air.',
-  outdoor_dust: 'Sits on the surface. Let it dry first.',
-  stain: 'Never goes in a wash untreated — heat sets it permanently.',
+type FormState = {
+  fibre1: string;
+  pct1: number;
+  fibre2: string | null;
+  pct2: number;
+  category: string;
+  construction: string;
+  sub: string;
+  colour: string;
+  structured: boolean;
+  wears: number;
+  nextToSkin: boolean;
+  activity: string;
+  soils: string[];
 };
 
+const INITIAL: FormState = {
+  fibre1: 'merino',
+  pct1: 100,
+  fibre2: null,
+  pct2: 0,
+  category: 'knitwear',
+  construction: 'knit',
+  sub: '',
+  colour: 'mid',
+  structured: false,
+  wears: 3,
+  nextToSkin: false,
+  activity: 'sedentary',
+  soils: ['none'],
+};
+
+/** One click to a real answer. Nobody should have to fill a form to see if this works. */
+const EXAMPLES: { label: string; state: FormState }[] = [
+  { label: 'Merino jumper, worn 3 times', state: INITIAL },
+  {
+    label: 'Gym leggings after a workout',
+    state: {
+      ...INITIAL,
+      fibre1: 'polyester', pct1: 88, fibre2: 'elastane', pct2: 12,
+      category: 'activewear', construction: 'knit', sub: 'jersey', colour: 'dark',
+      wears: 1, nextToSkin: true, activity: 'workout',
+      soils: ['body_odour', 'visible_sweat'],
+    },
+  },
+  {
+    label: 'Silk blouse with sweat marks',
+    state: {
+      ...INITIAL,
+      fibre1: 'silk', pct1: 100, category: 'shirt', construction: 'woven', sub: 'satin',
+      wears: 2, nextToSkin: true, activity: 'sedentary', soils: ['visible_sweat'],
+    },
+  },
+  {
+    label: 'Jeans, 10 wears',
+    state: {
+      ...INITIAL,
+      fibre1: 'cotton', pct1: 100, category: 'jeans', construction: 'woven', sub: 'denim',
+      colour: 'dark', wears: 10, nextToSkin: false, activity: 'active', soils: ['none'],
+    },
+  },
+];
+
+function toFormData(s: FormState): FormData {
+  const fd = new FormData();
+  fd.set('fibre1', s.fibre1);
+  fd.set('pct1', String(s.pct1));
+  if (s.fibre2) {
+    fd.set('fibre2', s.fibre2);
+    fd.set('pct2', String(s.pct2));
+  }
+  fd.set('category', s.category);
+  fd.set('construction', s.construction);
+  fd.set('sub_construction', s.sub);
+  fd.set('colour_depth', s.colour);
+  if (s.structured) fd.set('structured', 'on');
+  fd.set('wears', String(s.wears));
+  if (s.nextToSkin) fd.set('next_to_skin', 'on');
+  fd.set('activity', s.activity);
+  for (const soil of s.soils) fd.append('soil', soil);
+  return fd;
+}
+
 export function DecisionForm({ vocab }: { vocab: Vocab }) {
+  const [form, setForm] = useState<FormState>(INITIAL);
   const [result, setResult] = useState<DecideResult | null>(null);
   const [deciding, setDeciding] = useState(false);
   const [prose, setProse] = useState<{ prose: string; model: string } | null>(null);
   const [rephrasing, setRephrasing] = useState(false);
-  const [rephraseFailed, setRephraseFailed] = useState(false);
+  const answerRef = useRef<HTMLDivElement>(null);
 
-  const [hasSecondFibre, setHasSecondFibre] = useState(false);
-  const [pct1, setPct1] = useState(100);
-  const [pct2, setPct2] = useState(0);
-  const [soils, setSoils] = useState<string[]>(['none']);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((f) => ({ ...f, [key]: value }));
 
-  const total = pct1 + (hasSecondFibre ? pct2 : 0);
+  const hasSoil = !form.soils.includes('none');
+  const total = form.pct1 + (form.fibre2 ? form.pct2 : 0);
 
-  function addSecondFibre() {
-    setHasSecondFibre(true);
-    setPct1(95);
-    setPct2(5);
-  }
-
-  function removeSecondFibre() {
-    setHasSecondFibre(false);
-    setPct1(100);
-    setPct2(0);
-  }
-
-  /** "Nothing in particular" cannot coexist with an actual soil. */
   function toggleSoil(id: string) {
-    setSoils((current) => {
-      if (id === 'none') return ['none'];
-      const without = current.filter((s) => s !== 'none');
-      const next = without.includes(id) ? without.filter((s) => s !== id) : [...without, id];
-      return next.length === 0 ? ['none'] : next;
+    setForm((f) => {
+      const next = f.soils.includes(id) ? f.soils.filter((s) => s !== id) : [...f.soils, id];
+      return { ...f, soils: next.length === 0 ? ['none'] : next };
     });
   }
 
-  /**
-   * A plain submit handler, deliberately NOT `<form action={fn}>`.
-   *
-   * React 19 runs a form action inside a transition, and updates made in a
-   * transition are non-urgent: setting a pending flag, awaiting, then clearing
-   * it renders only the final state. The waiting state never appeared on
-   * screen no matter how it was written. An ordinary event handler makes these
-   * updates urgent, so the intermediate state is actually rendered.
-   */
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    // Read before awaiting — currentTarget is nulled once the handler yields.
-    const formData = new FormData(event.currentTarget);
-
+  async function decide(state: FormState) {
     setDeciding(true);
     setResult(null);
     setProse(null);
-    setRephraseFailed(false);
+    answerRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
 
-    /*
-     * Without this the answer renders around a thousand pixels ABOVE the
-     * button that produced it, so pressing the button appears to do nothing.
-     *
-     * Instant, not smooth, and deliberately so. A smooth scroll is an
-     * animation, and an animation can be throttled — measured here moving 64px
-     * in 1.4 seconds, leaving the answer off-screen and reintroducing the exact
-     * bug this line exists to fix. Landing on the result is the requirement;
-     * gliding there is not.
-     */
-    resultRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
-
-    // The rules engine answers in well under a millisecond, so on a warm
-    // server the waiting state would otherwise flash past unreadably. This is
-    // not padding for its own sake — a state you cannot see is the same as no
-    // state, which is what it looked like before.
+    const fd = toFormData(state);
+    // The rules answer in well under a millisecond; without a floor the waiting
+    // state would flash past unreadably, which is the same as having none.
     const [decided] = await Promise.all([
-      runDecision(formData),
-      new Promise((resolve) => setTimeout(resolve, 450)),
+      runDecision(fd),
+      new Promise((r) => setTimeout(r, 400)),
     ]);
     setResult(decided);
     setDeciding(false);
 
-    // Deliberately after the answer is on screen. The rules have already
-    // decided; this only rewords them, and it must never delay the answer.
     if (decided.ok) {
       setRephrasing(true);
-      void rephrase(formData)
-        .then((p) => {
-          setProse(p);
-          setRephraseFailed(p === null);
-        })
-        .catch(() => setRephraseFailed(true))
+      void rephrase(fd)
+        .then(setProse)
+        .catch(() => setProse(null))
         .finally(() => setRephrasing(false));
     }
   }
 
+  function runExample(state: FormState) {
+    setForm(state);
+    void decide(state);
+  }
+
   return (
-    <div className="grid gap-12 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:gap-16">
-      <form onSubmit={onSubmit}>
-        <Section title="The garment" step="01">
-          <Field
-            label="What is it made of?"
-            hint="Read it off the care label. This is the single biggest input — it sets the most the garment can safely take."
-          >
-            <div className="flex gap-2">
-              <select name="fibre1" className="control" defaultValue="merino" required>
+    <>
+      <div className="mb-5 flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-[13px] text-[var(--color-muted)]">Try one:</span>
+        {EXAMPLES.map((e) => (
+          <button key={e.label} type="button" className="chip" onClick={() => runExample(e.state)}>
+            {e.label}
+          </button>
+        ))}
+      </div>
+
+      <form
+        className="card"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void decide(form);
+        }}
+      >
+        <div className="grid gap-x-5 gap-y-5 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <Label>What is it made of?</Label>
+            <div className="flex flex-wrap gap-2">
+              <select
+                className="control is-grow basis-full sm:basis-0 sm:min-w-[9rem]"
+                value={form.fibre1}
+                onChange={(e) => set('fibre1', e.target.value)}
+              >
                 {vocab.fibres.map((f) => (
                   <option key={f.id} value={f.id}>{f.label}</option>
                 ))}
               </select>
-              <PercentInput name="pct1" value={pct1} onChange={setPct1} />
-            </div>
-
-            {hasSecondFibre ? (
-              <>
-                <div className="mt-2 flex gap-2">
-                  <select name="fibre2" className="control" defaultValue="elastane">
+              <Percent value={form.pct1} onChange={(n) => set('pct1', n)} />
+              {form.fibre2 ? (
+                <>
+                  <select
+                    className="control is-grow basis-full sm:basis-0 sm:min-w-[9rem]"
+                    value={form.fibre2}
+                    onChange={(e) => set('fibre2', e.target.value)}
+                  >
                     {vocab.fibres.map((f) => (
                       <option key={f.id} value={f.id}>{f.label}</option>
                     ))}
                   </select>
-                  <PercentInput name="pct2" value={pct2} onChange={setPct2} />
-                </div>
-                <div className="mt-2 flex items-center justify-between text-xs">
-                  <span className={total === 100 ? 'text-[var(--color-faint)]' : 'text-[var(--color-warn)]'}>
-                    {total === 100 ? 'Adds up to 100%.' : `Adds up to ${total}%, not 100%.`}
-                  </span>
-                  <button type="button" className="btn-quiet" onClick={removeSecondFibre}>
-                    Remove
+                  <Percent value={form.pct2} onChange={(n) => set('pct2', n)} />
+                  <button
+                    type="button"
+                    className="control is-auto flex-none px-3 text-[var(--color-muted)]"
+                    aria-label="Remove second fibre"
+                    onClick={() => setForm((f) => ({ ...f, fibre2: null, pct1: 100, pct2: 0 }))}
+                  >
+                    ×
                   </button>
-                </div>
-              </>
-            ) : (
-              <button type="button" className="btn-quiet mt-2" onClick={addSecondFibre}>
-                + Add a second fibre
-              </button>
-            )}
-          </Field>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="control is-auto flex-none whitespace-nowrap px-3 text-[13px] text-[var(--color-accent)]"
+                  onClick={() => setForm((f) => ({ ...f, fibre2: 'elastane', pct1: 95, pct2: 5 }))}
+                >
+                  + blend
+                </button>
+              )}
+            </div>
+            <Hint tone={form.fibre2 && total !== 100 ? 'warn' : 'normal'}>
+              {form.fibre2 && total !== 100
+                ? `That adds up to ${total}%, not 100%.`
+                : 'Straight off the care label. It sets the most this garment can safely take.'}
+            </Hint>
+          </div>
 
-          <Field
-            label="What kind of garment is it?"
-            hint="Sets how many wears it normally carries between washes. A blazer and a T-shirt are not on the same schedule."
-          >
-            <select name="category" className="control" defaultValue="knitwear">
+          <div>
+            <Label>What is it?</Label>
+            <select
+              className="control"
+              value={form.category}
+              onChange={(e) => set('category', e.target.value)}
+            >
               {vocab.categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
-          </Field>
+            <Hint>Sets how long it normally goes between washes.</Hint>
+          </div>
 
-          <Field
-            label="How is the fabric made?"
-            hint="Knits shed noticeably more fibre than wovens when washed. Leave the second box on “Any” if you're not sure."
-          >
-            <div className="flex gap-2">
-              <select name="construction" className="control" defaultValue="knit">
-                {vocab.constructions.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
-              <select name="sub_construction" className="control" defaultValue="">
-                <option value="">Any</option>
-                {vocab.subConstructions.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-          </Field>
-
-          <Field
-            label="How dark is the colour?"
-            hint="Dark dyes fade unevenly in direct sun, and strong colours can transfer to other garments in the first few washes."
-          >
-            <select name="colour_depth" className="control" defaultValue="mid">
-              <option value="">Not sure</option>
-              <option value="white">White</option>
-              <option value="light">Light</option>
-              <option value="mid">Mid</option>
-              <option value="dark">Dark</option>
-            </select>
-          </Field>
-
-          <CheckRow
-            name="structured"
-            label="It's structured"
-            hint="Interfacing, shoulder pads or a lining — tailoring, mostly. These layers shrink at different rates, so a wash pulls the shape out permanently."
-          />
-        </Section>
-
-        <Section title="What's happened to it" step="02">
-          <Field
-            label="How many times have you worn it since it was last washed?"
-            hint="Zero if it's straight out of the wash."
-          >
+          <div>
+            <Label>Worn how many times since washing?</Label>
             <input
-              name="wears"
               type="number"
               min={0}
               max={60}
-              defaultValue={3}
-              className="control"
-              style={{ textAlign: 'left' }}
+              className="control text-left"
+              value={form.wears}
+              onChange={(e) => set('wears', Number(e.target.value))}
             />
-          </Field>
+          </div>
 
-          <CheckRow
-            name="next_to_skin"
-            label="Worn against skin"
-            hint="Skin contact is what puts body oils into the cloth in the first place, so it roughly halves how long a garment goes between washes."
-          />
-
-          <Field
-            label="What was it doing?"
-            hint="Sweat load tracks what you were doing, not how long you wore it."
-          >
-            <select name="activity" className="control" defaultValue="sedentary">
-              <option value="">Not sure</option>
+          <div>
+            <Label>Doing what?</Label>
+            <select
+              className="control"
+              value={form.activity}
+              onChange={(e) => set('activity', e.target.value)}
+            >
               <option value="sedentary">An ordinary day</option>
-              <option value="active">Active — walking, commuting, on your feet</option>
+              <option value="active">Active — on your feet</option>
               <option value="workout">A workout</option>
             </select>
-          </Field>
+          </div>
 
-          <Field
-            label="Is there anything on it?"
-            hint="Tick everything that applies. What needs removing is what decides the answer."
-          >
-            <div className="space-y-1.5">
-              {vocab.soils.map((s) => (
-                <label key={s.id} className="check-row">
-                  <input
-                    type="checkbox"
-                    name="soil"
-                    value={s.id}
-                    checked={soils.includes(s.id)}
-                    onChange={() => toggleSoil(s.id)}
-                  />
-                  <span>
-                    <span className="block text-sm font-medium leading-tight">{s.label}</span>
-                    <span className="mt-0.5 block text-xs leading-snug text-[var(--color-muted)]">
-                      {SOIL_HINTS[s.id]}
-                    </span>
-                  </span>
-                </label>
-              ))}
+          <div>
+            <Label>Against your skin?</Label>
+            <div className="seg">
+              <button
+                type="button"
+                aria-pressed={!form.nextToSkin}
+                onClick={() => set('nextToSkin', false)}
+              >
+                Over a layer
+              </button>
+              <button
+                type="button"
+                aria-pressed={form.nextToSkin}
+                onClick={() => set('nextToSkin', true)}
+              >
+                Next to skin
+              </button>
             </div>
-          </Field>
-        </Section>
+          </div>
 
-        <div className="mt-8">
-          <button type="submit" className="btn-primary" disabled={deciding}>
+          <div className="md:col-span-3">
+            <Label>Anything on it?</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="seg">
+                <button
+                  type="button"
+                  aria-pressed={!hasSoil}
+                  onClick={() => set('soils', ['none'])}
+                >
+                  Nothing in particular
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={hasSoil}
+                  onClick={() => hasSoil || set('soils', ['body_odour'])}
+                >
+                  Something is
+                </button>
+              </div>
+
+              {/* Only shown once there is something to describe. Seven options
+                  a user has already said don't apply is seven options of noise. */}
+              {hasSoil &&
+                vocab.soils
+                  .filter((s) => s.id !== 'none')
+                  .map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="chip"
+                      aria-pressed={form.soils.includes(s.id)}
+                      onClick={() => toggleSoil(s.id)}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+            </div>
+          </div>
+        </div>
+
+        <details className="more mt-5">
+          <summary>More about the fabric</summary>
+          <div className="mt-4 grid gap-x-5 gap-y-5 md:grid-cols-3">
+            <div>
+              <Label>How is it made?</Label>
+              <div className="flex flex-wrap gap-2">
+                <select
+                  className="control is-grow basis-[7rem]"
+                  value={form.construction}
+                  onChange={(e) => set('construction', e.target.value)}
+                >
+                  {vocab.constructions.map((c) => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
+                <select
+                  className="control is-grow basis-[7rem]"
+                  value={form.sub}
+                  onChange={(e) => set('sub', e.target.value)}
+                >
+                  <option value="">Any</option>
+                  {vocab.subConstructions.map((c) => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              <Hint>Knits shed more fibre than wovens.</Hint>
+            </div>
+            <div>
+              <Label>How dark is it?</Label>
+              <select
+                className="control"
+                value={form.colour}
+                onChange={(e) => set('colour', e.target.value)}
+              >
+                <option value="">Not sure</option>
+                <option value="white">White</option>
+                <option value="light">Light</option>
+                <option value="mid">Mid</option>
+                <option value="dark">Dark</option>
+              </select>
+              <Hint>Dark dyes fade unevenly in sun.</Hint>
+            </div>
+            <div>
+              <Label>Structured?</Label>
+              <div className="seg">
+                <button type="button" aria-pressed={!form.structured} onClick={() => set('structured', false)}>
+                  No
+                </button>
+                <button type="button" aria-pressed={form.structured} onClick={() => set('structured', true)}>
+                  Yes
+                </button>
+              </div>
+              <Hint>Interfacing, shoulder pads or a lining.</Hint>
+            </div>
+          </div>
+        </details>
+
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <button type="submit" className="btn-primary w-auto px-8" disabled={deciding}>
             {deciding ? 'Working it out' : 'Should I wash it?'}
           </button>
-          <p className="mt-3 text-center text-xs text-[var(--color-faint)]">
-            Advisory only, and conservative by design. Nothing is stored.
-          </p>
+          <span className="text-xs text-[var(--color-faint)]">
+            Advisory only. Nothing is stored.
+          </span>
         </div>
       </form>
 
-      <div ref={resultRef} className="min-w-0 scroll-mt-8">
+      <div ref={answerRef} className="scroll-mt-6">
         {deciding && <Waiting />}
-        {!deciding && result === null && <EmptyState />}
         {!deciding && result?.ok === false && (
-          <p className="rounded border border-[var(--color-warn)] bg-white px-4 py-3 text-sm text-[var(--color-warn)]">
+          <p className="mt-10 rounded border border-[var(--color-warn)] bg-white px-4 py-3 text-sm text-[var(--color-warn)]">
             {result.error}
           </p>
         )}
         {!deciding && result?.ok && (
-          <Result
-            result={result}
-            prose={prose}
-            rephrasing={rephrasing}
-            rephraseFailed={rephraseFailed}
-          />
+          <Answer result={result} prose={prose} rephrasing={rephrasing} />
         )}
       </div>
-    </div>
+    </>
   );
 }
 
-/* ── Form primitives ─────────────────────────────────────────────────────── */
+/* ── Small pieces ────────────────────────────────────────────────────────── */
 
-function Section({
-  title,
-  step,
-  children,
-}: {
-  title: string;
-  step: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <fieldset className="mb-9">
-      <legend className="mb-5 flex w-full items-baseline gap-3 border-b border-[var(--color-line)] pb-2">
-        <span className="eyebrow">{step}</span>
-        <span className="display text-lg">{title}</span>
-      </legend>
-      <div className="space-y-6">{children}</div>
-    </fieldset>
-  );
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="q-label mb-1.5 block">{children}</span>;
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) {
+function Hint({ children, tone = 'normal' }: { children: React.ReactNode; tone?: 'normal' | 'warn' }) {
   return (
-    <div>
-      <span className="q-label">{label}</span>
-      <span className="q-hint">{hint}</span>
+    <span
+      className="mt-1.5 block text-xs leading-snug"
+      style={{ color: tone === 'warn' ? 'var(--color-warn)' : 'var(--color-faint)' }}
+    >
       {children}
-    </div>
+    </span>
   );
 }
 
-function PercentInput({
-  name,
-  value,
-  onChange,
-}: {
-  name: string;
-  value: number;
-  onChange: (n: number) => void;
-}) {
+function Percent({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
-    <div className="relative w-[86px] flex-none">
+    <div className="relative w-[76px] flex-none">
       <input
-        name={name}
         type="number"
         min={0}
         max={100}
@@ -368,48 +427,17 @@ function PercentInput({
         className="control pr-6"
         aria-label="percentage"
       />
-      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-faint)]">
+      <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-[var(--color-faint)]">
         %
       </span>
     </div>
   );
 }
 
-function CheckRow({ name, label, hint }: { name: string; label: string; hint: string }) {
-  const id = useId();
-  return (
-    <label className="check-row" htmlFor={id}>
-      <input id={id} type="checkbox" name={name} />
-      <span>
-        <span className="block text-sm font-medium leading-tight">{label}</span>
-        <span className="mt-0.5 block text-xs leading-snug text-[var(--color-muted)]">{hint}</span>
-      </span>
-    </label>
-  );
-}
-
-/* ── Result pane states ──────────────────────────────────────────────────── */
-
-function EmptyState() {
-  return (
-    <div className="max-w-md rounded-lg border border-dashed border-[var(--color-line-strong)] px-6 py-8">
-      <p className="display text-xl leading-snug">Describe a garment and what has happened to it.</p>
-      <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-        You'll get back the least you can do about it — which is often nothing — along with every
-        rule that produced that answer, an explicit list of what would damage the garment, and how
-        much fibre it would shed if you did wash it.
-      </p>
-      <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-        The form is already filled in with a merino jumper worn three times. Press the button.
-      </p>
-    </div>
-  );
-}
-
 function Waiting() {
   return (
-    <div aria-live="polite" aria-busy="true">
-      <p className="mb-6 flex items-center gap-2 text-sm text-[var(--color-muted)]">
+    <div className="mt-12" aria-live="polite" aria-busy="true">
+      <p className="mb-5 flex items-center gap-2 text-sm text-[var(--color-muted)]">
         Working out the least you can do
         <span aria-hidden className="inline-flex gap-1">
           <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
@@ -417,190 +445,206 @@ function Waiting() {
           <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
         </span>
       </p>
-      <div className="skeleton h-11 w-2/3" />
-      <div className="skeleton mt-3 h-4 w-full max-w-md" />
-      <div className="mt-10 space-y-2">
-        <div className="skeleton h-3 w-14" />
-        <div className="skeleton h-4 w-full max-w-xl" />
-        <div className="skeleton h-4 w-full max-w-lg" />
-        <div className="skeleton h-4 w-2/3 max-w-md" />
-      </div>
-      <div className="mt-8 space-y-2">
-        <div className="skeleton h-3 w-14" />
-        <div className="skeleton h-4 w-full max-w-lg" />
-        <div className="skeleton h-4 w-3/4 max-w-md" />
+      <div className="skeleton h-12 w-72 max-w-full" />
+      <div className="skeleton mt-3 h-4 w-full max-w-lg" />
+      <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_1fr]">
+        <div className="space-y-2">
+          <div className="skeleton h-3 w-16" />
+          <div className="skeleton h-4 w-full" />
+          <div className="skeleton h-4 w-11/12" />
+          <div className="skeleton h-4 w-2/3" />
+        </div>
+        <div className="space-y-2">
+          <div className="skeleton h-3 w-16" />
+          <div className="skeleton h-4 w-full" />
+          <div className="skeleton h-4 w-3/4" />
+        </div>
       </div>
     </div>
   );
 }
 
-function Result({
+/* ── The answer ──────────────────────────────────────────────────────────── */
+
+function Answer({
   result,
   prose,
   rephrasing,
-  rephraseFailed,
 }: {
   result: Extract<DecideResult, { ok: true }>;
   prose: { prose: string; model: string } | null;
   rephrasing: boolean;
-  rephraseFailed: boolean;
 }) {
   const { decision, explanation, labels } = result;
+  const [showRules, setShowRules] = useState(false);
   const name = (id: string) => labels[id] ?? id;
 
   return (
-    <article className="rise space-y-9">
-      <header>
-        <p className="eyebrow mb-2">The answer</p>
-        <h2 className="display text-4xl leading-tight sm:text-5xl">{explanation.headline}</h2>
-        <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-[var(--color-muted)]">
-          {explanation.summary}
-        </p>
-
-        {(rephrasing || prose || rephraseFailed) && (
-          <div className="mt-5 max-w-prose border-l-2 border-[var(--color-line-strong)] pl-4">
-            {rephrasing && !prose ? (
-              <>
-                <p className="flex items-center gap-2 text-xs text-[var(--color-faint)]">
-                  Putting that in plain words
-                  <span aria-hidden className="inline-flex gap-1">
-                    <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
-                    <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
-                    <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
-                  </span>
-                </p>
-                <div className="skeleton mt-2 h-3.5 w-full" />
-                <div className="skeleton mt-1.5 h-3.5 w-4/5" />
-              </>
-            ) : prose ? (
-              <div className="rise">
-                <p className="text-sm leading-relaxed">{prose.prose}</p>
-                <p className="mt-2 text-[11px] leading-snug text-[var(--color-faint)]">
-                  Reworded by {prose.model}, then checked against the rules that fired. The rules
-                  decided; the model only rephrased them.
-                </p>
-              </div>
-            ) : (
-              /* Saying so beats the block appearing and then vanishing — and
-                 the point it makes is one worth making: nothing was lost. */
-              <p className="rise text-[11px] leading-snug text-[var(--color-faint)]">
-                No plain-language rewording this time — the free model either didn't answer or
-                said something the rules don't support, so it was discarded. The reasoning below
-                is the engine's own and is unaffected.
-              </p>
-            )}
-          </div>
-        )}
-      </header>
+    <article className="rise mt-12 border-t border-[var(--color-line)] pt-10">
+      <p className="eyebrow mb-2">The answer</p>
+      <h2 className="display text-4xl leading-tight sm:text-5xl">{explanation.headline}</h2>
+      <p className="mt-3 max-w-2xl text-[17px] leading-relaxed">
+        {prose ? prose.prose : explanation.summary}
+      </p>
+      {rephrasing && !prose && <div className="skeleton mt-3 h-4 w-full max-w-2xl" />}
 
       {decision.do_first.length > 0 && (
-        <Block title="Do this first">
-          <ul className="space-y-1">
-            {decision.do_first.map((a) => (
-              <li key={a} className="text-sm font-medium">
-                {name(a)}
-              </li>
-            ))}
-          </ul>
-        </Block>
+        <p className="mt-5 inline-block rounded border border-[var(--color-warn)] bg-white px-3 py-2 text-sm">
+          <strong className="font-semibold text-[var(--color-warn)]">First:</strong>{' '}
+          {decision.do_first.map(name).join(', ')}
+        </p>
       )}
 
-      <Block title="Why">
-        <ol className="space-y-4">
-          {explanation.claims.map((claim, i) => (
-            <li key={claim.rule_id} className="flex gap-3">
-              <span className="mt-0.5 flex-none font-mono text-[11px] text-[var(--color-faint)]">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span className="max-w-prose text-sm leading-relaxed">
+      <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
+        <section>
+          <h3 className="eyebrow mb-4">Why</h3>
+          <ul className="space-y-3.5">
+            {explanation.claims.map((claim) => (
+              <li key={claim.rule_id} className="text-[15px] leading-relaxed">
                 {claim.text}
-                <span className="mt-1 block font-mono text-[11px] text-[var(--color-faint)]">
-                  {claim.rule_id}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </Block>
-
-      {decision.never_do.length > 0 && (
-        <Block title="Never">
-          <ul className="space-y-4">
-            {decision.never_do.map((c) => (
-              <li key={c.rule_id} className="max-w-prose text-sm leading-relaxed">
-                <strong className="font-semibold text-[var(--color-warn)]">{c.never_do}</strong>{' '}
-                {c.because}
-                <span className="mt-1 block font-mono text-[11px] text-[var(--color-faint)]">
-                  {c.sources.map((s) => s.id).join(' · ')}
-                </span>
               </li>
             ))}
           </ul>
-        </Block>
-      )}
+        </section>
 
-      <div className="grid gap-8 sm:grid-cols-2">
-        <Block title="When it's dry">
-          <p className="text-sm">{name(decision.drying)}</p>
-        </Block>
-        <Block title="Also fine">
-          <p className="text-sm">
-            {decision.alternatives.length > 0
-              ? decision.alternatives.map(name).join(', ')
-              : 'Nothing gentler would do the job.'}
-          </p>
-        </Block>
+        <div className="space-y-8">
+          {decision.never_do.length > 0 && (
+            <section>
+              <h3 className="eyebrow mb-4">Never</h3>
+              <ul className="space-y-3">
+                {decision.never_do.map((c) => (
+                  <li key={c.rule_id} className="text-[15px] leading-relaxed">
+                    <strong className="font-semibold text-[var(--color-warn)]">{c.never_do}</strong>{' '}
+                    <span className="text-[var(--color-muted)]">{c.because}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section className="grid grid-cols-2 gap-6">
+            <div>
+              <h3 className="eyebrow mb-2">When it's dry</h3>
+              <p className="text-[15px]">{name(decision.drying)}</p>
+            </div>
+            <div>
+              <h3 className="eyebrow mb-2">Also fine</h3>
+              <p className="text-[15px]">
+                {decision.alternatives.length > 0
+                  ? decision.alternatives.map(name).join(', ')
+                  : 'Nothing gentler would do it.'}
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h3 className="eyebrow mb-2">If you did wash it</h3>
+            <p className="text-[15px] leading-relaxed">
+              Fibre shedding would be{' '}
+              <strong className="font-semibold">
+                {decision.impact_estimate.relative_shedding.replace('_', ' ')}
+              </strong>{' '}
+              for this fabric.{' '}
+              {decision.impact_estimate.wears_extended_estimate
+                ? `Left alone, it has roughly ${decision.impact_estimate.wears_extended_estimate} more wears in it first.`
+                : ''}
+            </p>
+          </section>
+        </div>
       </div>
 
-      <Block title="Impact — estimates, not measurements">
-        <p className="max-w-prose text-sm leading-relaxed">
-          Relative shedding if washed:{' '}
-          <strong className="font-semibold">
-            {decision.impact_estimate.relative_shedding.replace('_', ' ')}
-          </strong>
-          . {decision.impact_estimate.energy_note}
-          {decision.impact_estimate.wears_extended_estimate
-            ? ` Roughly ${decision.impact_estimate.wears_extended_estimate} more wears before a wash is indicated.`
-            : ''}
-        </p>
-        <p className="mt-2 max-w-prose text-xs leading-relaxed text-[var(--color-faint)]">
-          {decision.impact_estimate.method}
-        </p>
-      </Block>
-
       {decision.unknowns.length > 0 && (
-        <Block title="Worth checking">
+        <section className="mt-10">
+          <h3 className="eyebrow mb-3">Worth checking</h3>
           <ul className="space-y-2">
             {decision.unknowns.map((u) => (
-              <li key={u} className="max-w-prose text-sm leading-relaxed text-[var(--color-muted)]">
+              <li key={u} className="max-w-2xl text-[15px] leading-relaxed text-[var(--color-muted)]">
                 {u}
               </li>
             ))}
           </ul>
-        </Block>
+        </section>
       )}
 
-      <footer className="space-y-2 border-t border-[var(--color-line)] pt-5 text-xs leading-relaxed text-[var(--color-faint)]">
-        <p>
-          Confidence {decision.confidence}. The most this garment can safely take at home is{' '}
-          <strong className="font-semibold">{name(decision.ceiling.action)}</strong>, and nothing
-          above that is ever recommended.
-        </p>
-        <p>
-          Advisory only and conservative by design. When in doubt, follow the garment's own label.
-          Care symbols are described in words here — the official symbol artwork is trademarked and
-          is not reproduced.
-        </p>
-      </footer>
+      <p className="mt-10 max-w-2xl text-xs leading-relaxed text-[var(--color-faint)]">
+        Advisory only and conservative by design — when in doubt, follow the garment's own label.
+        Care symbols are described in words; the official artwork is trademarked and not reproduced.
+      </p>
+
+      {/*
+        Everything a consumer does not need and a reviewer does: rule ids,
+        citations, the computed ceiling, the model that did the wording. This
+        used to sit in the middle of the page, which is why it had to move.
+      */}
+      <div className="mt-8">
+        <button type="button" className="btn-quiet" onClick={() => setShowRules((v) => !v)}>
+          {showRules ? 'Hide the rules behind this' : 'Show the rules behind this'}
+        </button>
+
+        {showRules && (
+          <div className="audit mt-4 space-y-4">
+            <p>
+              Every recommendation is produced by deterministic rules, each citing a source. A
+              language model never chooses the action — at most it rewords the reasoning, and its
+              wording is discarded if it says anything the rules do not support.
+            </p>
+            <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+              <Row k="Care ceiling for this garment" v={name(decision.ceiling.action)} />
+              <Row k="Confidence" v={String(decision.confidence)} />
+              <Row
+                k="Wording"
+                v={prose ? prose.model : 'deterministic (no model response used)'}
+              />
+              <Row k="Rules fired" v={String(decision.reasoning.length)} />
+            </dl>
+            <div>
+              <p className="mb-2 font-medium text-[var(--color-ink)]">Rules behind the answer</p>
+              <ul className="space-y-2.5">
+                {explanation.claims.map((c) => {
+                  const hit = decision.reasoning.find((h) => h.rule_id === c.rule_id);
+                  return (
+                    <li key={c.rule_id}>
+                      <code>{c.rule_id}</code>
+                      {hit?.sources?.length ? (
+                        <> — <code>{hit.sources.map((x) => x.id).join(', ')}</code></>
+                      ) : null}
+                      {hit?.rationale && (
+                        <span className="mt-1 block max-w-2xl leading-relaxed">
+                          {hit.rationale}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            {decision.never_do.length > 0 && (
+              <div>
+                <p className="mb-2 font-medium text-[var(--color-ink)]">Constraints and citations</p>
+                <ul className="space-y-1">
+                  {decision.never_do.map((c) => (
+                    <li key={c.rule_id}>
+                      <code>{c.rule_id}</code> — <code>{c.sources.map((s) => s.id).join(', ')}</code>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="text-[var(--color-faint)]">
+              {decision.impact_estimate.method}
+            </p>
+          </div>
+        )}
+      </div>
     </article>
   );
 }
 
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
+function Row({ k, v }: { k: string; v: string }) {
   return (
-    <section>
-      <h3 className="eyebrow mb-3">{title}</h3>
-      {children}
-    </section>
+    <div className="flex justify-between gap-4 border-b border-[var(--color-line)] pb-1">
+      <dt>{k}</dt>
+      <dd className="text-right font-medium text-[var(--color-ink)]">{v}</dd>
+    </div>
   );
 }

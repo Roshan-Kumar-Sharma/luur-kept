@@ -18,7 +18,7 @@ professional_route: none
 wears_per_wash_baseline: 1
 minor_component_still_governs: true
 rationale:
-  ceiling: "Heat is what destroys elastane, and it is almost always a small percentage of a blend. A garment that is ninety-five per cent cotton is still governed by its five per cent elastane, because the elastane is what fails and once it has gone the garment no longer fits."
+  ceiling: "Heat is what destroys elastane, and it is almost always a small percentage of a blend. A garment that is mostly something else is still governed by its small elastane content, because the elastane is what fails — and once it has gone, the garment no longer fits."
   max_safe_temp_c: "Elastane loses its recovery permanently above roughly thirty degrees. The garment does not look damaged; it simply stops springing back."
   permitted_drying: "Tumble drying is the most common way elastane is destroyed, because the heat is sustained rather than brief."
   odour_retention: "Sits against skin in activewear and holds body oils, so elastane blends reach the point of needing a wash quickly."

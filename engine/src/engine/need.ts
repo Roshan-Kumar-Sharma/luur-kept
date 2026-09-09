@@ -46,6 +46,7 @@ export function buildNeed(
     const unworn = situation.wears_since_wash === 0;
     let floor = soil.need_floor;
     let because = soil.rationale;
+    let rationale: string | undefined;
 
     if (unworn && soil.need_floor_when_unworn) {
       floor = soil.need_floor_when_unworn;
@@ -57,8 +58,9 @@ export function buildNeed(
       if (byOdour) {
         floor = byOdour;
         because =
-          `${soil.rationale} This blend ${odourPhrase}, which is what decides ` +
-          'whether that can be lifted without washing.';
+          `This blend ${odourPhrase}, which is what decides whether the smell ` +
+          'can be aired out or needs washing.';
+        rationale = soil.rationale;
       }
     }
 
@@ -69,6 +71,7 @@ export function buildNeed(
           layer: 'soil',
           effect: { kind: 'need', floor },
           because,
+          ...(rationale ? { rationale } : {}),
           sources: soil.sources,
           inputs: ['soil', ...(soil.need_floor_by_odour_retention ? ['fibres'] : [])],
         }),
@@ -146,8 +149,8 @@ export function buildNeed(
         because:
           `${wornPhrase(situation.wears_since_wash)}, against about ` +
           `${Math.max(1, Math.round(budget))} for this garment in this situation — ` +
-          `it ${odourPhrase}. No wash is indicated yet. ` +
-          mods.within.rationale.trim(),
+          `it ${odourPhrase}. No wash is indicated yet.`,
+        rationale: mods.within.rationale.trim(),
         sources: mods.within.sources,
         inputs: ['wears_since_wash', 'next_to_skin', 'activity', 'ambient', 'fibres'],
       }),
@@ -171,7 +174,8 @@ export function buildNeed(
               `like this, is washed after every wear — it ${odourPhrase}. `
             : `${wornPhrase(situation.wears_since_wash)}, against about ` +
               `${Math.round(budget)} for this garment in this situation — ` +
-              `it ${odourPhrase}. `) + mods.exceeded.rationale.trim(),
+              `it ${odourPhrase}.`),
+        rationale: mods.exceeded.rationale.trim(),
         sources: mods.exceeded.sources,
         inputs: ['wears_since_wash', 'next_to_skin', 'activity', 'ambient', 'fibres'],
       }),
