@@ -106,12 +106,14 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
-  const hasSoil = !form.soils.includes('none');
   const total = form.pct1 + (form.fibre2 ? form.pct2 : 0);
 
+  /** "Nothing in particular" cannot coexist with an actual soil. */
   function toggleSoil(id: string) {
     setForm((f) => {
-      const next = f.soils.includes(id) ? f.soils.filter((s) => s !== id) : [...f.soils, id];
+      if (id === 'none') return { ...f, soils: ['none'] };
+      const without = f.soils.filter((s) => s !== 'none');
+      const next = without.includes(id) ? without.filter((s) => s !== id) : [...without, id];
       return { ...f, soils: next.length === 0 ? ['none'] : next };
     });
   }
@@ -164,9 +166,12 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
           void decide(form);
         }}
       >
-        <div className="grid gap-x-5 gap-y-5 md:grid-cols-3">
-          <div className="md:col-span-2">
-            <Label>What is it made of?</Label>
+        <div className="grid gap-x-8 gap-y-7 md:grid-cols-2">
+          <Field
+            className="md:col-span-2"
+            label="What is it made of?"
+            hint="Straight off the care label. This is the single biggest input — it sets the most this garment can safely take, and no recommendation ever goes above that."
+          >
             <div className="flex flex-wrap gap-2">
               <select
                 className="control is-grow basis-full sm:basis-0 sm:min-w-[9rem]"
@@ -205,19 +210,21 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
                   className="control is-auto flex-none whitespace-nowrap px-3 text-[13px] text-[var(--color-accent)]"
                   onClick={() => setForm((f) => ({ ...f, fibre2: 'elastane', pct1: 95, pct2: 5 }))}
                 >
-                  + blend
+                  + add a second fibre
                 </button>
               )}
             </div>
-            <Hint tone={form.fibre2 && total !== 100 ? 'warn' : 'normal'}>
-              {form.fibre2 && total !== 100
-                ? `That adds up to ${total}%, not 100%.`
-                : 'Straight off the care label. It sets the most this garment can safely take.'}
-            </Hint>
-          </div>
+            {form.fibre2 && total !== 100 && (
+              <span className="mt-2 block text-xs text-[var(--color-warn)]">
+                That adds up to {total}%, not 100%.
+              </span>
+            )}
+          </Field>
 
-          <div>
-            <Label>What is it?</Label>
+          <Field
+            label="What kind of garment is it?"
+            hint="Sets how many wears it normally carries between washes. A blazer and a T-shirt are not on the same schedule."
+          >
             <select
               className="control"
               value={form.category}
@@ -227,11 +234,12 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
                 <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
-            <Hint>Sets how long it normally goes between washes.</Hint>
-          </div>
+          </Field>
 
-          <div>
-            <Label>Worn how many times since washing?</Label>
+          <Field
+            label="How many times have you worn it since it was last washed?"
+            hint="Zero if it has just come out of the wash. This is counted against what the fibre and construction can actually carry, not against a rule of thumb."
+          >
             <input
               type="number"
               min={0}
@@ -240,140 +248,118 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
               value={form.wears}
               onChange={(e) => set('wears', Number(e.target.value))}
             />
-          </div>
+          </Field>
 
-          <div>
-            <Label>Doing what?</Label>
+          <Field
+            label="What was it doing?"
+            hint="Sweat load tracks what you were doing, not how long you wore it. A workout shortens the interval far more than a long day does."
+          >
             <select
               className="control"
               value={form.activity}
               onChange={(e) => set('activity', e.target.value)}
             >
               <option value="sedentary">An ordinary day</option>
-              <option value="active">Active — on your feet</option>
+              <option value="active">Active — walking, commuting, on your feet</option>
               <option value="workout">A workout</option>
             </select>
-          </div>
+          </Field>
 
-          <div>
-            <Label>Against your skin?</Label>
+          <Field
+            label="Was it against your skin?"
+            hint="Skin contact is what puts body oils into the cloth in the first place, so it roughly halves how long a garment goes between washes."
+          >
             <div className="seg">
-              <button
-                type="button"
-                aria-pressed={!form.nextToSkin}
-                onClick={() => set('nextToSkin', false)}
-              >
+              <button type="button" aria-pressed={!form.nextToSkin} onClick={() => set('nextToSkin', false)}>
                 Over a layer
               </button>
-              <button
-                type="button"
-                aria-pressed={form.nextToSkin}
-                onClick={() => set('nextToSkin', true)}
-              >
+              <button type="button" aria-pressed={form.nextToSkin} onClick={() => set('nextToSkin', true)}>
                 Next to skin
               </button>
             </div>
-          </div>
+          </Field>
 
-          <div className="md:col-span-3">
-            <Label>Anything on it?</Label>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="seg">
+          <Field
+            className="md:col-span-2"
+            label="Is there anything on it?"
+            hint="What actually needs removing is what decides the answer. Choose everything that applies — “Nothing in particular” clears the rest."
+          >
+            <div className="flex flex-wrap gap-2">
+              {vocab.soils.map((soil) => (
                 <button
+                  key={soil.id}
                   type="button"
-                  aria-pressed={!hasSoil}
-                  onClick={() => set('soils', ['none'])}
+                  className="chip"
+                  aria-pressed={form.soils.includes(soil.id)}
+                  onClick={() => toggleSoil(soil.id)}
                 >
-                  Nothing in particular
+                  {soil.label}
                 </button>
-                <button
-                  type="button"
-                  aria-pressed={hasSoil}
-                  onClick={() => hasSoil || set('soils', ['body_odour'])}
-                >
-                  Something is
-                </button>
-              </div>
-
-              {/* Only shown once there is something to describe. Seven options
-                  a user has already said don't apply is seven options of noise. */}
-              {hasSoil &&
-                vocab.soils
-                  .filter((s) => s.id !== 'none')
-                  .map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className="chip"
-                      aria-pressed={form.soils.includes(s.id)}
-                      onClick={() => toggleSoil(s.id)}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
+              ))}
             </div>
-          </div>
+          </Field>
+
+          <Field
+            label="How is the fabric made?"
+            hint="Knits shed noticeably more fibre than wovens when washed, and a fleece or brushed face sheds most of all. Leave the second box on “Any” if you are not sure."
+          >
+            <div className="flex flex-wrap gap-2">
+              <select
+                className="control is-grow basis-[7rem]"
+                value={form.construction}
+                onChange={(e) => set('construction', e.target.value)}
+              >
+                {vocab.constructions.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+              <select
+                className="control is-grow basis-[7rem]"
+                value={form.sub}
+                onChange={(e) => set('sub', e.target.value)}
+              >
+                <option value="">Any</option>
+                {vocab.subConstructions.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+          </Field>
+
+          <Field
+            label="How dark is the colour?"
+            hint="Dark dyes fade unevenly in direct sunlight, and strong colours can transfer onto other garments for the first few washes."
+          >
+            <select
+              className="control"
+              value={form.colour}
+              onChange={(e) => set('colour', e.target.value)}
+            >
+              <option value="">Not sure</option>
+              <option value="white">White</option>
+              <option value="light">Light</option>
+              <option value="mid">Mid</option>
+              <option value="dark">Dark</option>
+            </select>
+          </Field>
+
+          <Field
+            className="md:col-span-2"
+            label="Is it structured?"
+            hint="Interfacing, shoulder pads or a lining — tailoring, mostly. Those layers shrink at different rates, so a wash pulls the shape out permanently and pressing will not bring it back."
+          >
+            <div className="seg">
+              <button type="button" aria-pressed={!form.structured} onClick={() => set('structured', false)}>
+                No
+              </button>
+              <button type="button" aria-pressed={form.structured} onClick={() => set('structured', true)}>
+                Yes
+              </button>
+            </div>
+          </Field>
         </div>
 
-        <details className="more mt-5">
-          <summary>More about the fabric</summary>
-          <div className="mt-4 grid gap-x-5 gap-y-5 md:grid-cols-3">
-            <div>
-              <Label>How is it made?</Label>
-              <div className="flex flex-wrap gap-2">
-                <select
-                  className="control is-grow basis-[7rem]"
-                  value={form.construction}
-                  onChange={(e) => set('construction', e.target.value)}
-                >
-                  {vocab.constructions.map((c) => (
-                    <option key={c.id} value={c.id}>{c.label}</option>
-                  ))}
-                </select>
-                <select
-                  className="control is-grow basis-[7rem]"
-                  value={form.sub}
-                  onChange={(e) => set('sub', e.target.value)}
-                >
-                  <option value="">Any</option>
-                  {vocab.subConstructions.map((c) => (
-                    <option key={c.id} value={c.id}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-              <Hint>Knits shed more fibre than wovens.</Hint>
-            </div>
-            <div>
-              <Label>How dark is it?</Label>
-              <select
-                className="control"
-                value={form.colour}
-                onChange={(e) => set('colour', e.target.value)}
-              >
-                <option value="">Not sure</option>
-                <option value="white">White</option>
-                <option value="light">Light</option>
-                <option value="mid">Mid</option>
-                <option value="dark">Dark</option>
-              </select>
-              <Hint>Dark dyes fade unevenly in sun.</Hint>
-            </div>
-            <div>
-              <Label>Structured?</Label>
-              <div className="seg">
-                <button type="button" aria-pressed={!form.structured} onClick={() => set('structured', false)}>
-                  No
-                </button>
-                <button type="button" aria-pressed={form.structured} onClick={() => set('structured', true)}>
-                  Yes
-                </button>
-              </div>
-              <Hint>Interfacing, shoulder pads or a lining.</Hint>
-            </div>
-          </div>
-        </details>
-
-        <div className="mt-6 flex flex-wrap items-center gap-4">
+        <div className="mt-8 flex flex-wrap items-center gap-4">
           <button type="submit" className="btn-primary w-auto px-8" disabled={deciding}>
             {deciding ? 'Working it out' : 'Should I wash it?'}
           </button>
@@ -400,18 +386,28 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
 
 /* ── Small pieces ────────────────────────────────────────────────────────── */
 
-function Label({ children }: { children: React.ReactNode }) {
-  return <span className="q-label mb-1.5 block">{children}</span>;
-}
-
-function Hint({ children, tone = 'normal' }: { children: React.ReactNode; tone?: 'normal' | 'warn' }) {
+/**
+ * Every field carries its question and a line on what the answer changes.
+ * Nobody filling this in has a reason to know that knits shed more than wovens,
+ * and saying so is the point of the product rather than a footnote to it.
+ */
+function Field({
+  label,
+  hint,
+  className,
+  children,
+}: {
+  label: string;
+  hint: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <span
-      className="mt-1.5 block text-xs leading-snug"
-      style={{ color: tone === 'warn' ? 'var(--color-warn)' : 'var(--color-faint)' }}
-    >
+    <div className={className}>
+      <span className="q-label">{label}</span>
+      <span className="q-hint">{hint}</span>
       {children}
-    </span>
+    </div>
   );
 }
 
@@ -447,17 +443,17 @@ function Waiting() {
       </p>
       <div className="skeleton h-12 w-72 max-w-full" />
       <div className="skeleton mt-3 h-4 w-full max-w-lg" />
-      <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_1fr]">
-        <div className="space-y-2">
+      {/* Mirrors the shape of the real answer: stacked full-width sections. */}
+      <div className="mt-10 space-y-9">
+        <div className="space-y-2 border-t border-[var(--color-line)] pt-5">
           <div className="skeleton h-3 w-16" />
-          <div className="skeleton h-4 w-full" />
-          <div className="skeleton h-4 w-11/12" />
-          <div className="skeleton h-4 w-2/3" />
+          <div className="skeleton h-4 w-full max-w-4xl" />
+          <div className="skeleton h-4 w-11/12 max-w-3xl" />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 border-t border-[var(--color-line)] pt-5">
           <div className="skeleton h-3 w-16" />
-          <div className="skeleton h-4 w-full" />
-          <div className="skeleton h-4 w-3/4" />
+          <div className="skeleton h-4 w-full max-w-4xl" />
+          <div className="skeleton h-4 w-2/3 max-w-2xl" />
         </div>
       </div>
     </div>
@@ -476,17 +472,16 @@ function Answer({
   rephrasing: boolean;
 }) {
   const { decision, explanation, labels } = result;
-  const [showRules, setShowRules] = useState(false);
   const name = (id: string) => labels[id] ?? id;
 
   return (
     <article className="rise mt-12 border-t border-[var(--color-line)] pt-10">
       <p className="eyebrow mb-2">The answer</p>
       <h2 className="display text-4xl leading-tight sm:text-5xl">{explanation.headline}</h2>
-      <p className="mt-3 max-w-2xl text-[17px] leading-relaxed">
+      <p className="mt-3 max-w-3xl text-[17px] leading-relaxed">
         {prose ? prose.prose : explanation.summary}
       </p>
-      {rephrasing && !prose && <div className="skeleton mt-3 h-4 w-full max-w-2xl" />}
+      {rephrasing && !prose && <div className="skeleton mt-3 h-4 w-full max-w-3xl" />}
 
       {decision.do_first.length > 0 && (
         <p className="mt-5 inline-block rounded border border-[var(--color-warn)] bg-white px-3 py-2 text-sm">
@@ -495,156 +490,86 @@ function Answer({
         </p>
       )}
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
-        <section>
-          <h3 className="eyebrow mb-4">Why</h3>
+      <Answers>
+        <AnswerSection title="Why">
           <ul className="space-y-3.5">
             {explanation.claims.map((claim) => (
-              <li key={claim.rule_id} className="text-[15px] leading-relaxed">
+              <li key={claim.rule_id} className="max-w-4xl text-[15px] leading-relaxed">
                 {claim.text}
               </li>
             ))}
           </ul>
-        </section>
+        </AnswerSection>
 
-        <div className="space-y-8">
-          {decision.never_do.length > 0 && (
-            <section>
-              <h3 className="eyebrow mb-4">Never</h3>
-              <ul className="space-y-3">
-                {decision.never_do.map((c) => (
-                  <li key={c.rule_id} className="text-[15px] leading-relaxed">
-                    <strong className="font-semibold text-[var(--color-warn)]">{c.never_do}</strong>{' '}
-                    <span className="text-[var(--color-muted)]">{c.because}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+        {decision.never_do.length > 0 && (
+          <AnswerSection title="Never">
+            <ul className="space-y-3">
+              {decision.never_do.map((c) => (
+                <li key={c.rule_id} className="max-w-4xl text-[15px] leading-relaxed">
+                  <strong className="font-semibold text-[var(--color-warn)]">{c.never_do}</strong>{' '}
+                  <span className="text-[var(--color-muted)]">{c.because}</span>
+                </li>
+              ))}
+            </ul>
+          </AnswerSection>
+        )}
 
-          <section className="grid grid-cols-2 gap-6">
-            <div>
-              <h3 className="eyebrow mb-2">When it's dry</h3>
-              <p className="text-[15px]">{name(decision.drying)}</p>
-            </div>
-            <div>
-              <h3 className="eyebrow mb-2">Also fine</h3>
-              <p className="text-[15px]">
-                {decision.alternatives.length > 0
-                  ? decision.alternatives.map(name).join(', ')
-                  : 'Nothing gentler would do it.'}
-              </p>
-            </div>
-          </section>
+        {decision.unknowns.length > 0 && (
+          <AnswerSection title="Worth checking">
+            <ul className="space-y-2">
+              {decision.unknowns.map((u) => (
+                <li key={u} className="max-w-4xl text-[15px] leading-relaxed text-[var(--color-muted)]">
+                  {u}
+                </li>
+              ))}
+            </ul>
+          </AnswerSection>
+        )}
 
-          <section>
-            <h3 className="eyebrow mb-2">If you did wash it</h3>
-            <p className="text-[15px] leading-relaxed">
-              Fibre shedding would be{' '}
-              <strong className="font-semibold">
-                {decision.impact_estimate.relative_shedding.replace('_', ' ')}
-              </strong>{' '}
-              for this fabric.{' '}
-              {decision.impact_estimate.wears_extended_estimate
-                ? `Left alone, it has roughly ${decision.impact_estimate.wears_extended_estimate} more wears in it first.`
-                : ''}
-            </p>
-          </section>
-        </div>
-      </div>
+        <AnswerSection title="When it's dry">
+          <p className="text-[15px] leading-relaxed">{name(decision.drying)}</p>
+        </AnswerSection>
 
-      {decision.unknowns.length > 0 && (
-        <section className="mt-10">
-          <h3 className="eyebrow mb-3">Worth checking</h3>
-          <ul className="space-y-2">
-            {decision.unknowns.map((u) => (
-              <li key={u} className="max-w-2xl text-[15px] leading-relaxed text-[var(--color-muted)]">
-                {u}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        <AnswerSection title="Also fine">
+          <p className="text-[15px] leading-relaxed">
+            {decision.alternatives.length > 0
+              ? decision.alternatives.map(name).join(', ')
+              : 'Nothing gentler would do the job.'}
+          </p>
+        </AnswerSection>
 
-      <p className="mt-10 max-w-2xl text-xs leading-relaxed text-[var(--color-faint)]">
+        <AnswerSection title="If you did wash it">
+          <p className="max-w-4xl text-[15px] leading-relaxed">
+            Fibre shedding would be{' '}
+            <strong className="font-semibold">
+              {decision.impact_estimate.relative_shedding.replace('_', ' ')}
+            </strong>{' '}
+            for this fabric.{' '}
+            {decision.impact_estimate.wears_extended_estimate
+              ? `Left alone, it has roughly ${decision.impact_estimate.wears_extended_estimate} more wears in it first.`
+              : ''}
+          </p>
+        </AnswerSection>
+      </Answers>
+
+      <p className="mt-10 max-w-3xl text-xs leading-relaxed text-[var(--color-faint)]">
         Advisory only and conservative by design — when in doubt, follow the garment's own label.
         Care symbols are described in words; the official artwork is trademarked and not reproduced.
       </p>
-
-      {/*
-        Everything a consumer does not need and a reviewer does: rule ids,
-        citations, the computed ceiling, the model that did the wording. This
-        used to sit in the middle of the page, which is why it had to move.
-      */}
-      <div className="mt-8">
-        <button type="button" className="btn-quiet" onClick={() => setShowRules((v) => !v)}>
-          {showRules ? 'Hide the rules behind this' : 'Show the rules behind this'}
-        </button>
-
-        {showRules && (
-          <div className="audit mt-4 space-y-4">
-            <p>
-              Every recommendation is produced by deterministic rules, each citing a source. A
-              language model never chooses the action — at most it rewords the reasoning, and its
-              wording is discarded if it says anything the rules do not support.
-            </p>
-            <dl className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
-              <Row k="Care ceiling for this garment" v={name(decision.ceiling.action)} />
-              <Row k="Confidence" v={String(decision.confidence)} />
-              <Row
-                k="Wording"
-                v={prose ? prose.model : 'deterministic (no model response used)'}
-              />
-              <Row k="Rules fired" v={String(decision.reasoning.length)} />
-            </dl>
-            <div>
-              <p className="mb-2 font-medium text-[var(--color-ink)]">Rules behind the answer</p>
-              <ul className="space-y-2.5">
-                {explanation.claims.map((c) => {
-                  const hit = decision.reasoning.find((h) => h.rule_id === c.rule_id);
-                  return (
-                    <li key={c.rule_id}>
-                      <code>{c.rule_id}</code>
-                      {hit?.sources?.length ? (
-                        <> — <code>{hit.sources.map((x) => x.id).join(', ')}</code></>
-                      ) : null}
-                      {hit?.rationale && (
-                        <span className="mt-1 block max-w-2xl leading-relaxed">
-                          {hit.rationale}
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-            {decision.never_do.length > 0 && (
-              <div>
-                <p className="mb-2 font-medium text-[var(--color-ink)]">Constraints and citations</p>
-                <ul className="space-y-1">
-                  {decision.never_do.map((c) => (
-                    <li key={c.rule_id}>
-                      <code>{c.rule_id}</code> — <code>{c.sources.map((s) => s.id).join(', ')}</code>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <p className="text-[var(--color-faint)]">
-              {decision.impact_estimate.method}
-            </p>
-          </div>
-        )}
-      </div>
     </article>
   );
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+/** Sections stack full width, one after another, rather than sitting in columns. */
+function Answers({ children }: { children: React.ReactNode }) {
+  return <div className="mt-10 space-y-9">{children}</div>;
+}
+
+function AnswerSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex justify-between gap-4 border-b border-[var(--color-line)] pb-1">
-      <dt>{k}</dt>
-      <dd className="text-right font-medium text-[var(--color-ink)]">{v}</dd>
-    </div>
+    <section className="border-t border-[var(--color-line)] pt-5">
+      <h3 className="eyebrow mb-3">{title}</h3>
+      {children}
+    </section>
   );
 }
