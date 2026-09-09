@@ -1,0 +1,116 @@
+# The soil model — what actually needs removing determines the intervention.
+#
+# This is the layer that turns a care ladder into a decision. Every other care
+# app asks what the garment is; none of them ask what happened to it.
+#
+# Each soil contributes a NEED FLOOR: the minimum intervention that will
+# actually deal with it. The engine takes the highest floor across present
+# soils, then picks the gentlest permitted action at or above that floor.
+# Floors only ever push upward and the ceiling only ever pushes down, so the
+# two can be folded independently and met in the middle.
+
+soils:
+  none:
+    label: "Nothing in particular"
+    need_floor: air_out
+    need_floor_when_unworn: wear_again
+    rationale: "Ambient dust and a day's wear. Moving air deals with it."
+    rationale_when_unworn: "It has not been worn since it was last washed. There is nothing to do."
+    sources: [engineer-inference]
+
+  body_odour:
+    label: "It smells"
+    # The floor depends on the fibre, and this is the most important rule in the
+    # engine. Odour in a low-retention fibre sits on the surface and lifts with
+    # airing or a refresh treatment. Odour in polyester is bound to body oils
+    # inside the fibre and will not lift without surfactant. The same advice
+    # cannot cover both, which is precisely why "wash less" needs an engine
+    # rather than a slogan.
+    need_floor_by_odour_retention:
+      very_low: refresh_spray
+      low: refresh_spray
+      moderate: machine_wash_cold_delicate
+      high: machine_wash_cold
+      very_high: machine_wash_cold
+    need_floor_min: hand_wash_cold
+    rationale: "Odour is bacteria acting on skin oils. Whether that can be lifted without washing depends entirely on how tightly the fibre holds the oil."
+    rationale_min: "A cold hand wash with a gentle detergent deals with body odour in any fibre. It is the fallback when a garment cannot take the machine."
+    sources: [engineer-inference]
+
+  visible_sweat:
+    label: "Visible sweat marks"
+    need_floor: machine_wash_cold_delicate
+    need_floor_min: hand_wash_cold
+    rationale: "Salts and oils that have dried into the cloth need water and surfactant to come out. Cold is normally sufficient — heat is not what removes them, and it sets the discolouration."
+    rationale_min: "Where a garment cannot take a machine at all, a cold hand wash removes the same salts and oils. It is slower, not weaker."
+    sources: [engineer-inference]
+
+  food_grease:
+    label: "Food or grease"
+    need_floor: spot_clean
+    require_first: spot_clean
+    rationale: "A lipid mark needs treating where it is before the garment goes anywhere near a full cycle. A wash spreads it and dilutes it across the cloth instead of removing it."
+    sources: [engineer-inference]
+
+  smoke:
+    label: "Smoke"
+    need_floor: air_out
+    rationale: "Absorbed volatiles leave on their own with enough moving air and time. This is the case where washing is most often unnecessary and most often done anyway."
+    sources: [engineer-inference]
+
+  outdoor_dust:
+    label: "Dust or mud"
+    need_floor: brush
+    rationale: "Particulate sits on the surface. Let it dry, then brush or shake it off. Washing it wet drives it into the weave."
+    sources: [engineer-inference]
+
+  stain:
+    label: "A stain"
+    need_floor: spot_clean
+    require_first: spot_clean
+    forbid_params: [hot_water]
+    rationale: "Treat the stain before any full wash. Heat sets most stains permanently, and a protein stain in particular becomes far harder to shift once it has been through a warm cycle."
+    sources: [engineer-inference]
+
+# Modifiers that raise how quickly a garment reaches the point of needing a wash.
+# These multiply the wear budget computed from the fibre blend; they never touch
+# the ceiling.
+wear_budget_modifiers:
+  next_to_skin:
+    multiplier: 0.5
+    rationale: "Direct skin contact is what puts the oils in the cloth in the first place."
+    sources: [engineer-inference]
+  activity:
+    sedentary: { multiplier: 1.0 }
+    active: { multiplier: 0.6 }
+    workout: { multiplier: 0.2 }
+    rationale: "Sweat load scales with what the garment was doing, not how long it was worn."
+    sources: [engineer-inference]
+  ambient:
+    cold: { multiplier: 1.3 }
+    temperate: { multiplier: 1.0 }
+    hot_humid: { multiplier: 0.5 }
+    rationale: "Heat and humidity accelerate the bacterial activity that produces odour."
+    sources: [engineer-inference]
+  odour_phrases:
+    very_low: "barely holds odour at all"
+    low: "holds odour lightly"
+    moderate: "holds odour moderately"
+    high: "holds odour readily"
+    very_high: "holds odour very tightly"
+  within:
+    rationale: >
+      How many wears a garment carries before it needs washing is a property of
+      the fibre, not a rule of thumb. It is computed from how readily this blend
+      holds odour, then adjusted for skin contact, activity and climate — which
+      is why the honest answer differs for a wool jumper and a polyester base
+      layer, and why one piece of advice cannot cover both.
+    sources: [engineer-inference]
+  exceeded:
+    rationale: >
+      The garment has been worn more times than this fibre and construction
+      comfortably carry between washes. The floor this sets is the same one
+      body odour would set, because it is the same problem arriving on a
+      schedule rather than by observation — which is why a merino jumper's
+      budget runs to a week and a polyester base layer's runs to one wear.
+    sources: [engineer-inference]

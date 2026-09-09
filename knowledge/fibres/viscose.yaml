@@ -1,0 +1,32 @@
+id: viscose
+display_name: Viscose / rayon
+class: regenerated
+properties:
+  max_safe_temp_c: 30
+  agitation_tolerance: very_low
+  shrink_risk: high
+  dye_bleed_risk: high
+  odour_retention: moderate
+  pilling_risk: moderate
+  permitted_drying: [flat_dry_shade]
+  shed_class: high
+  biological_soil_affinity: high
+  wet_strength: very_low
+  sun_sensitivity: moderate
+ceiling: hand_wash_cold
+professional_route: dry_clean
+wears_per_wash_baseline: 2
+rationale:
+  ceiling: "Viscose loses most of its strength when wet. Garments that survive one machine wash often come out a size smaller and never recover."
+  wet_strength: "The defining weakness of the fibre. Wet viscose tears under its own weight, so it is supported flat and never wrung."
+  shrink_risk: "Wet viscose relaxes and shrinks substantially, and the change is not reversible by pressing."
+  odour_retention: "Absorbent and oil-friendly, so it picks up body odour faster than its drape suggests."
+sources:
+  ceiling: [engineer-inference]
+  wet_strength: [engineer-inference]
+  shrink_risk: [engineer-inference]
+  odour_retention: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

@@ -1,0 +1,36 @@
+id: wool
+display_name: Wool
+class: protein
+properties:
+  max_safe_temp_c: 30
+  agitation_tolerance: very_low
+  shrink_risk: high
+  dye_bleed_risk: moderate
+  odour_retention: very_low
+  pilling_risk: high
+  permitted_drying: [flat_dry_shade]
+  shed_class: moderate
+  biological_soil_affinity: low
+  wet_strength: low
+  sun_sensitivity: moderate
+ceiling: hand_wash_cold
+professional_route: dry_clean
+wears_per_wash_baseline: 5
+rationale:
+  ceiling: "Wool felts irreversibly when scales interlock under agitation. The limiting factor is the machine, not the temperature — which is why a cold machine cycle is still not permitted."
+  agitation_tolerance: "Felting is mechanical. Once it has happened the garment cannot be returned to size."
+  odour_retention: "Wool's structure carries moisture away as vapour and gives odour compounds little to hold onto, which is the whole reason a wool garment can be worn repeatedly."
+  permitted_drying: "Tumble drying combines heat and agitation, the two conditions that felt wool. Wet wool also has low strength and will stretch under its own weight if hung."
+  wet_strength: "Wool loses strength when wet and must be supported rather than wrung or hung."
+  pilling_risk: "Short surface fibres migrate and tangle at friction points; this is surface wear, not damage, and can be removed."
+sources:
+  ceiling: [engineer-inference, ginetex-symbols]
+  agitation_tolerance: [engineer-inference]
+  odour_retention: [engineer-inference]
+  permitted_drying: [engineer-inference, ginetex-symbols]
+  wet_strength: [engineer-inference]
+  pilling_risk: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: medium

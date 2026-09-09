@@ -1,0 +1,7 @@
+{
+  "damage_avoidance_recall": 1,
+  "decision_accuracy": 0.8666666666666667,
+  "within_one_step": 1,
+  "over_wash_rate": 0.037037037037037035,
+  "explanation_faithfulness": 1
+}

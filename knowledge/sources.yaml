@@ -1,0 +1,71 @@
+# Every rule in this repository cites a source id from this file.
+# A rule citing an id that is not listed here fails `pnpm lint:knowledge`.
+#
+# `kind` is deliberately blunt, because the honest answer to "where did this
+# number come from?" is the most important thing a reviewer needs:
+#
+#   peer_reviewed      published research
+#   standards_body     a standards or trade body's public guidance
+#   industry           manufacturer / trade practice, publicly documented
+#   engineer_inference general public knowledge, assembled by a non-specialist.
+#                      This is the reviewable surface. See knowledge/README.md.
+
+sources:
+  - id: ginetex-symbols
+    title: "GINETEX care symbols — public guide"
+    url: "https://www.ginetex.net/gb/labelling/care-symbols.asp"
+    kind: standards_body
+    accessed: "2026-09-08"
+    note: >
+      Used for SYMBOL SEMANTICS ONLY. The symbol artwork is trademark-protected
+      and is not reproduced anywhere in this repository.
+
+  - id: iso-3758-2023
+    title: "ISO 3758:2023 — Textiles, care labelling code using symbols"
+    url: "https://www.iso.org/obp/ui/#iso:std:iso:3758:en"
+    kind: standards_body
+    accessed: "2026-09-08"
+    note: >
+      Referenced for scope only. This is a paid standard; none of its text is
+      reproduced here. Where care-label semantics are encoded, the public
+      GINETEX guide is the working source.
+
+  - id: plos-microfibre-2021
+    title: "Domestic laundry and microfiber pollution — PLOS ONE"
+    url: "https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0250346"
+    kind: peer_reviewed
+    accessed: "2026-09-08"
+    note: >
+      Basis for: higher temperature and larger detergent dose both increase
+      fibre release; colder, shorter cycles reduce release.
+
+  - id: sciencedirect-fabric-shedding
+    title: "Microfiber release from different fabrics during washing"
+    url: "https://www.sciencedirect.com/science/article/abs/pii/S0269749118346104"
+    kind: peer_reviewed
+    accessed: "2026-09-08"
+    note: >
+      Basis for: mechanically-treated polyester (fleece, jersey) releases on the
+      order of 6x woven filament nylon; release rises with fabric thickness for
+      nylon and polyester.
+
+  - id: pmc-structure-shedding
+    title: "Textile microplastics shedding and fabric structure"
+    url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9740661/"
+    kind: peer_reviewed
+    accessed: "2026-09-08"
+    note: >
+      Basis for: knits shed more than wovens; among wovens satin releases most
+      and plain weave least; acetate was the highest shedder in the tested set.
+
+  - id: engineer-inference
+    title: "Engineer inference from general public knowledge — NOT expert-reviewed"
+    url: null
+    kind: engineer_inference
+    accessed: "2026-09-09"
+    note: >
+      Authored by Roshan, a software engineer and not a textiles specialist,
+      from widely-published general care guidance. Every value carrying this
+      source is a candidate for correction by someone who has actually spent a
+      career on materials. That correction is the point of the project, not a
+      footnote to it. `pnpm evals` prints how much of the matrix rests on this.

@@ -1,0 +1,154 @@
+# The gentleness ladder.
+#
+# ORDER IS DATA. If a textiles expert disagrees with where a rung sits, it moves
+# in this file and no TypeScript changes. The engine only ever asks the ladder
+# for relative position; it has no opinion of its own about what is gentle.
+#
+# TWO SEGMENTS, and the distinction is load-bearing:
+#
+#   domestic     — things you do to the garment yourself. The care ceiling is a
+#                  hard clamp over this segment. Exceeding it is the P0 failure
+#                  that `damage_avoidance_recall` measures.
+#
+#   professional — handing the garment to someone with equipment you don't have.
+#                  NOT "more aggressive than a warm machine wash"; it is a
+#                  different axis. A structured wool blazer has a very low
+#                  domestic ceiling and dry cleaning is still the right answer
+#                  when it genuinely needs cleaning. So the professional segment
+#                  is reached only by explicit escalation, never by a rule
+#                  climbing past the ceiling.
+
+segments:
+  domestic:
+    - wear_again
+    - air_out
+    - brush
+    - steam
+    - spot_clean
+    - refresh_spray
+    - hand_wash_cold
+    - machine_wash_cold_delicate
+    - machine_wash_cold
+    - machine_wash_warm
+  professional:
+    - professional_wet_clean
+    - dry_clean
+
+actions:
+  wear_again:
+    label: "Wear it again"
+    summary: "Nothing needs doing. Put it back on."
+    wet_process: false
+    agitation: none
+    heat: none
+
+  air_out:
+    label: "Air it out"
+    summary: "Hang it somewhere with moving air for a few hours. Not in a pile, not in the wardrobe."
+    wet_process: false
+    agitation: none
+    heat: none
+
+  brush:
+    label: "Brush it"
+    summary: "A garment brush lifts surface dust and particulate off the face of the cloth."
+    wet_process: false
+    agitation: low
+    heat: none
+
+  steam:
+    label: "Steam it"
+    summary: "Relaxes creases and helps carry off absorbed odour without wetting the cloth through."
+    wet_process: false
+    agitation: none
+    heat: moderate
+
+  spot_clean:
+    label: "Spot clean"
+    summary: "Treat the affected area only. Leaves the rest of the garment alone."
+    wet_process: true
+    agitation: low
+    heat: none
+
+  refresh_spray:
+    label: "Refresh"
+    summary: "A between-wears treatment on the whole garment, instead of a wash."
+    wet_process: true
+    agitation: none
+    heat: none
+
+  hand_wash_cold:
+    label: "Hand wash, cold"
+    summary: "Cold water, gentle detergent, no rubbing, no wringing. Support the garment's weight when wet."
+    wet_process: true
+    agitation: low
+    heat: none
+
+  machine_wash_cold_delicate:
+    label: "Machine wash cold, delicate cycle"
+    summary: "Coldest setting, delicate cycle, low spin, ideally in a mesh bag."
+    wet_process: true
+    agitation: moderate
+    heat: none
+
+  machine_wash_cold:
+    label: "Machine wash cold"
+    summary: "Normal cycle at the coldest setting."
+    wet_process: true
+    agitation: high
+    heat: none
+
+  machine_wash_warm:
+    label: "Machine wash warm"
+    summary: "Normal cycle, warm water."
+    wet_process: true
+    agitation: high
+    heat: high
+
+  professional_wet_clean:
+    label: "Professional wet clean"
+    summary: "A water-based professional process. Gentler on the fibre than solvent, where the garment permits it."
+    wet_process: true
+    agitation: low
+    heat: none
+
+  dry_clean:
+    label: "Dry clean"
+    summary: "Solvent-based professional cleaning. The route for structured and solvent-only garments."
+    wet_process: false
+    agitation: low
+    heat: none
+
+drying:
+  actions:
+    flat_dry_shade:
+      label: "Dry flat, out of direct sun"
+      summary: "Lay it flat and reshape while damp. Hanging it wet will pull it out of shape."
+    flat_dry:
+      label: "Dry flat"
+      summary: "Lay it flat and reshape while damp."
+    line_dry_shade:
+      label: "Line dry, out of direct sun"
+      summary: "Hang to dry away from direct sunlight."
+    line_dry:
+      label: "Line dry"
+      summary: "Hang to dry."
+    tumble_low:
+      label: "Tumble dry low"
+      summary: "Low heat only."
+    tumble_normal:
+      label: "Tumble dry"
+      summary: "Normal heat."
+    air_only:
+      label: "Air dry only"
+      summary: "No machine drying of any kind."
+  # Gentlest first. Same convention as the ladder: the engine picks the
+  # gentlest option every fibre in the blend permits.
+  order:
+    - air_only
+    - flat_dry_shade
+    - flat_dry
+    - line_dry_shade
+    - line_dry
+    - tumble_low
+    - tumble_normal

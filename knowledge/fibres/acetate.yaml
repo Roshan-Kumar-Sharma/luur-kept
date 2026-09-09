@@ -1,0 +1,32 @@
+id: acetate
+display_name: Acetate
+class: regenerated
+properties:
+  max_safe_temp_c: 30
+  agitation_tolerance: very_low
+  shrink_risk: high
+  dye_bleed_risk: high
+  odour_retention: moderate
+  pilling_risk: low
+  permitted_drying: [flat_dry_shade]
+  shed_class: very_high
+  biological_soil_affinity: moderate
+  wet_strength: very_low
+  sun_sensitivity: moderate
+ceiling: hand_wash_cold
+professional_route: dry_clean
+wears_per_wash_baseline: 3
+rationale:
+  ceiling: "Acetate is weak wet, shrinks, and water-marks readily. Most acetate garments are linings and most are labelled for solvent cleaning."
+  shed_class: "Acetate released more fibre than any other material in the tested set — worth knowing given how often it appears as a lining nobody thinks about."
+  wet_strength: "Among the weakest wet of any apparel fibre."
+  dye_bleed_risk: "Acetate linings are frequently the source of dye transfer onto the shell of a garment."
+sources:
+  ceiling: [engineer-inference]
+  shed_class: [pmc-structure-shedding]
+  wet_strength: [engineer-inference]
+  dye_bleed_risk: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

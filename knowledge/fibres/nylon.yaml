@@ -1,0 +1,32 @@
+id: nylon
+display_name: Nylon / polyamide
+class: synthetic
+properties:
+  max_safe_temp_c: 40
+  agitation_tolerance: high
+  shrink_risk: low
+  dye_bleed_risk: moderate
+  odour_retention: high
+  pilling_risk: moderate
+  permitted_drying: [line_dry_shade, flat_dry]
+  shed_class: high
+  biological_soil_affinity: high
+  wet_strength: high
+  sun_sensitivity: high
+ceiling: machine_wash_cold
+professional_route: none
+wears_per_wash_baseline: 2
+rationale:
+  ceiling: "Nylon is mechanically tough but heat-sensitive; a cold normal cycle is well within tolerance and a warm one is not worth the risk to any elastane blended with it."
+  sun_sensitivity: "Nylon yellows and loses strength under ultraviolet light, so drying it in direct sun shortens its life measurably."
+  shed_class: "Fibre release rises with fabric thickness in nylon; a thin woven shell sheds far less than a thick knitted one."
+  odour_retention: "Oil-loving like polyester, though it holds odour somewhat less tenaciously."
+sources:
+  ceiling: [engineer-inference]
+  sun_sensitivity: [engineer-inference]
+  shed_class: [sciencedirect-fabric-shedding]
+  odour_retention: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

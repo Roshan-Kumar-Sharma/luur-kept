@@ -1,0 +1,131 @@
+# Hard constraints — the never-do list.
+#
+# Per the spec this is the highest-value output in the product, so it is worth
+# being clear about what makes it different from the rest of the engine. Every
+# other layer is advisory and degrades gracefully. These do not degrade. A
+# constraint that fires removes an option from the candidate set outright, and
+# no later rule can put it back, because the rule vocabulary has no operation
+# that permits anything.
+#
+# `when` conditions are ANDed. Lists inside a condition are ORed.
+# Available conditions:
+#   any_fibre           [fibre ids]
+#   any_fibre_class     [protein | cellulosic | regenerated | synthetic | other]
+#   any_fibre_min_pct   { fibre, pct }
+#   category            [category ids]
+#   construction        [construction ids]
+#   finish_any          [finish ids]
+#   colour_depth        [white | light | mid | dark]
+#   soil_any            [soil ids]
+#   structured          true | false
+#   wet_strength_at_most  [scale value]
+
+constraints:
+  - id: never_tumble_dry_protein
+    when:
+      any_fibre_class: [protein]
+    effects:
+      - { kind: forbid_param, param: tumble_dry }
+    never_do: "Don't tumble dry it."
+    because: "Heat and tumbling together are exactly the conditions that felt wool, and felting cannot be reversed. The garment comes out smaller and denser and stays that way."
+    sources: [engineer-inference, ginetex-symbols]
+
+  - id: never_hot_wash_elastane
+    when:
+      any_fibre_min_pct: { fibre: elastane, pct: 1 }
+    effects:
+      - { kind: forbid_param, param: hot_water }
+      - { kind: forbid, action: machine_wash_warm }
+      - { kind: forbid_param, param: tumble_dry }
+    never_do: "Don't wash it warm, and don't tumble dry it."
+    because: "Elastane loses its recovery permanently above about thirty degrees. Nothing looks damaged afterwards — the garment simply stops springing back and never fits the same way again. A garment that is ninety-five per cent cotton is still governed by its five per cent elastane."
+    sources: [engineer-inference]
+
+  - id: never_machine_wash_structured
+    when:
+      structured: true
+    effects:
+      - { kind: ceiling, max: spot_clean }
+      - { kind: professional, route: dry_clean }
+    never_do: "Don't put it in the machine."
+    because: "Interfacing, canvas and lining are separate materials that shrink at different rates. Once they have moved against each other the garment's shape is gone and pressing will not bring it back."
+    sources: [engineer-inference]
+
+  - id: never_bleach_protein
+    when:
+      any_fibre_class: [protein]
+    effects:
+      - { kind: forbid_param, param: bleach }
+    never_do: "Never use bleach on it."
+    because: "Chlorine bleach dissolves protein fibre. This is not a discolouration risk — the fibre itself is destroyed, and holes appear where the bleach landed."
+    sources: [engineer-inference, ginetex-symbols]
+
+  - id: spot_treat_protein_stain_before_washing
+    when:
+      soil_any: [stain]
+    effects:
+      - { kind: require_first, action: spot_clean }
+      - { kind: forbid_param, param: hot_water }
+    never_do: "Don't wash it before treating the stain."
+    because: "Heat sets most stains permanently, and protein stains in particular. A warm cycle turns a removable mark into a permanent one, and the wash cannot be undone."
+    sources: [engineer-inference]
+
+  - id: never_wring_weak_wet_fibres
+    when:
+      wet_strength_at_most: [very_low, low]
+    effects:
+      - { kind: forbid_param, param: wring }
+      - { kind: forbid_param, param: hang_wet }
+    never_do: "Don't wring it out, and don't hang it up wet."
+    because: "This fibre loses much of its strength when wet. Wringing sets permanent creases and hanging lets the garment stretch under the weight of the water it is holding. Press the water out between towels and dry it flat."
+    sources: [engineer-inference]
+
+  - id: never_dry_dark_dyes_in_sun
+    when:
+      colour_depth: [mid, dark]
+    effects:
+      - { kind: forbid_param, param: direct_sun }
+    never_do: "Don't dry it in direct sunlight."
+    because: "Ultraviolet light breaks down dye faster than it damages fibre, so the garment fades long before it wears out — and it fades unevenly, along whatever line was facing the sun."
+    sources: [engineer-inference]
+
+  - id: no_water_on_leather
+    when:
+      any_fibre: [leather]
+    effects:
+      - { kind: ceiling, max: brush }
+      - { kind: forbid_param, param: tumble_dry }
+      - { kind: forbid_param, param: direct_sun }
+      - { kind: professional, route: dry_clean }
+    never_do: "Don't wash it, and don't spot clean it with water."
+    because: "Leather stiffens as it dries and leaves a permanent tide line at the edge of wherever it got wet. Spot cleaning with water makes a small problem into a visible one."
+    sources: [engineer-inference]
+
+  - id: no_softener_on_water_repellent
+    when:
+      finish_any: [water_repellent]
+    effects:
+      - { kind: forbid_param, param: fabric_softener }
+    never_do: "Never use fabric softener on it."
+    because: "Softener coats the fibre and blocks the repellent finish. The garment stops beading water and the effect is not recovered by washing the softener back out."
+    sources: [engineer-inference]
+
+  - id: no_heat_on_prints
+    when:
+      finish_any: [printed]
+    effects:
+      - { kind: forbid_param, param: hot_water }
+      - { kind: forbid_param, param: tumble_dry }
+    never_do: "Don't wash it warm or tumble dry it."
+    because: "Applied prints crack and lift with heat. Washing it inside out matters more than which cycle you choose."
+    sources: [engineer-inference]
+
+  - id: separate_first_washes_of_strong_dye
+    when:
+      colour_depth: [dark]
+      any_fibre_min_pct: { fibre: cotton, pct: 40 }
+    effects:
+      - { kind: unknown, note: "Strong dye on cotton transfers in the first few washes. Wash it separately until the water runs clear." }
+    never_do: "Don't wash it with light colours the first few times."
+    because: "Reactive dye on cotton keeps releasing for several washes, and denim indigo continues to transfer well beyond that."
+    sources: [engineer-inference]

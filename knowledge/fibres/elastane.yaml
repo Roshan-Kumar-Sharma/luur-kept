@@ -1,0 +1,35 @@
+id: elastane
+display_name: Elastane / spandex
+class: synthetic
+properties:
+  max_safe_temp_c: 30
+  agitation_tolerance: moderate
+  shrink_risk: low
+  dye_bleed_risk: low
+  odour_retention: high
+  pilling_risk: low
+  permitted_drying: [flat_dry, line_dry_shade]
+  shed_class: moderate
+  biological_soil_affinity: high
+  wet_strength: moderate
+  sun_sensitivity: high
+ceiling: machine_wash_cold_delicate
+professional_route: none
+wears_per_wash_baseline: 1
+minor_component_still_governs: true
+rationale:
+  ceiling: "Heat is what destroys elastane, and it is almost always a small percentage of a blend. A garment that is ninety-five per cent cotton is still governed by its five per cent elastane, because the elastane is what fails and once it has gone the garment no longer fits."
+  max_safe_temp_c: "Elastane loses its recovery permanently above roughly thirty degrees. The garment does not look damaged; it simply stops springing back."
+  permitted_drying: "Tumble drying is the most common way elastane is destroyed, because the heat is sustained rather than brief."
+  odour_retention: "Sits against skin in activewear and holds body oils, so elastane blends reach the point of needing a wash quickly."
+  minor_component_still_governs: "This is why the engine takes the worst case across every fibre present, at any percentage, rather than a weighted average."
+sources:
+  ceiling: [engineer-inference]
+  max_safe_temp_c: [engineer-inference]
+  permitted_drying: [engineer-inference, ginetex-symbols]
+  odour_retention: [engineer-inference]
+  minor_component_still_governs: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: medium

@@ -1,0 +1,30 @@
+id: lyocell
+display_name: Lyocell
+class: regenerated
+properties:
+  max_safe_temp_c: 40
+  agitation_tolerance: low
+  shrink_risk: moderate
+  dye_bleed_risk: moderate
+  odour_retention: moderate
+  pilling_risk: moderate
+  permitted_drying: [flat_dry, line_dry_shade]
+  shed_class: moderate
+  biological_soil_affinity: moderate
+  wet_strength: moderate
+  sun_sensitivity: low
+ceiling: machine_wash_cold_delicate
+professional_route: none
+wears_per_wash_baseline: 3
+rationale:
+  ceiling: "Lyocell keeps far more of its strength wet than viscose does, so a cold delicate cycle is within its tolerance."
+  odour_retention: "Moves moisture away from the skin better than viscose does, which slows odour development — but it is still an absorbent cellulosic worn next to skin, and it does take up body oils."
+  pilling_risk: "Prone to fibrillation — surface fibres split under wet abrasion and show as a pale bloom on dark colours."
+sources:
+  ceiling: [engineer-inference]
+  odour_retention: [engineer-inference]
+  pilling_risk: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

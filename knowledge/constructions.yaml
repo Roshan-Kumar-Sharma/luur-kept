@@ -1,0 +1,105 @@
+# How a fibre is made into cloth changes how it behaves, independently of what
+# it is made of. Fibre release in particular is a construction property at least
+# as much as a fibre property.
+#
+# `shed_shift` moves a fibre's shed_class along the ordinal scale in
+# blending.yaml. The scale caps at both ends, so shifts do not run away.
+
+constructions:
+  knit:
+    label: "Knit"
+    shed_shift: 1
+    rationale: "Knitted structures have looser, more exposed yarn ends than wovens and release more fibre in washing."
+    sources: [pmc-structure-shedding]
+  woven:
+    label: "Woven"
+    shed_shift: 0
+    rationale: "Interlaced yarns hold fibre ends in place better than loops do."
+    sources: [pmc-structure-shedding]
+  nonwoven:
+    label: "Non-woven"
+    shed_shift: 1
+    rationale: "Bonded rather than interlaced, so surface fibres detach readily under agitation."
+    sources: [engineer-inference]
+  leather:
+    label: "Leather"
+    shed_shift: -2
+    ceiling: brush
+    rationale: "Not a textile structure at all. No domestic wet process applies."
+    sources: [engineer-inference]
+  coated:
+    label: "Coated or bonded"
+    shed_shift: 0
+    ceiling: spot_clean
+    rationale: "The coating is the functional part of the garment and it is what washing destroys. Machine agitation delaminates it long before the cloth beneath wears out."
+    sources: [engineer-inference]
+
+sub_constructions:
+  jersey:
+    label: "Jersey"
+    shed_shift: 0
+    rationale: "The reference knit. Mechanically-treated polyester jersey and fleece are the heaviest shedders measured."
+    sources: [sciencedirect-fabric-shedding]
+  fleece:
+    label: "Fleece"
+    shed_shift: 2
+    rationale: "The napping process that makes fleece soft works by breaking fibre ends free at the surface, which is exactly what then washes out. Fleece released on the order of six times as much fibre as a woven filament nylon."
+    sources: [sciencedirect-fabric-shedding]
+  rib:
+    label: "Rib"
+    shed_shift: 0
+    rationale: "Structurally a knit; no measured difference from jersey worth encoding."
+    sources: [engineer-inference]
+  plain:
+    label: "Plain weave"
+    shed_shift: -1
+    rationale: "The tightest common interlacing, and the lowest-releasing weave in the tested set."
+    sources: [pmc-structure-shedding]
+  twill:
+    label: "Twill"
+    shed_shift: 0
+    rationale: "Sits between plain and satin in float length, and between them in fibre release."
+    sources: [pmc-structure-shedding]
+  satin:
+    label: "Satin"
+    shed_shift: 1
+    rationale: "Long floats leave more yarn exposed to abrasion, and satin released the most fibre of the wovens tested."
+    sources: [pmc-structure-shedding]
+  denim:
+    label: "Denim"
+    shed_shift: 0
+    rationale: "A heavy twill. Its distinctive care issue is indigo dye transfer rather than fibre release."
+    sources: [engineer-inference]
+
+finishes:
+  brushed:
+    label: "Brushed"
+    shed_shift: 1
+    pilling_shift: 1
+    rationale: "Brushing lifts fibre ends to the surface to soften the handle, and those raised ends are the ones that shed and pill."
+    sources: [sciencedirect-fabric-shedding]
+  napped:
+    label: "Napped"
+    shed_shift: 1
+    pilling_shift: 1
+    rationale: "Same mechanism as brushing, applied more heavily."
+    sources: [sciencedirect-fabric-shedding]
+  water_repellent:
+    label: "Water repellent"
+    ceiling: machine_wash_cold_delicate
+    wears_multiplier: 1.5
+    forbid_params: [bleach]
+    rationale: "The repellent finish is consumed by detergent and by heat. Washing a water-repellent shell more often than necessary is the fastest way to stop it being water-repellent."
+    sources: [engineer-inference]
+  printed:
+    label: "Printed"
+    ceiling: machine_wash_cold
+    forbid_params: [hot_water]
+    rationale: "Applied prints crack and lift with heat and with agitation against other garments. Turning the garment inside out matters more than the cycle chosen."
+    sources: [engineer-inference]
+  sequinned:
+    label: "Sequinned or beaded"
+    ceiling: spot_clean
+    professional_route: dry_clean
+    rationale: "Embellishment is attached with thread and adhesive that machine agitation destroys, and loose sequins abrade the cloth around them."
+    sources: [engineer-inference]

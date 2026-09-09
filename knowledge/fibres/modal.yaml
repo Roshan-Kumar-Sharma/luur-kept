@@ -1,0 +1,30 @@
+id: modal
+display_name: Modal
+class: regenerated
+properties:
+  max_safe_temp_c: 40
+  agitation_tolerance: low
+  shrink_risk: moderate
+  dye_bleed_risk: moderate
+  odour_retention: moderate
+  pilling_risk: moderate
+  permitted_drying: [flat_dry, line_dry_shade]
+  shed_class: moderate
+  biological_soil_affinity: high
+  wet_strength: low
+  sun_sensitivity: low
+ceiling: machine_wash_cold_delicate
+professional_route: none
+wears_per_wash_baseline: 2
+rationale:
+  ceiling: "Modal sits between viscose and lyocell — stronger wet than viscose, so a cold delicate cycle is reasonable, but not a normal one."
+  biological_soil_affinity: "Common in underwear and base layers precisely because it is soft and absorbent, which is also why it takes up body soil quickly."
+  wears_per_wash_baseline: "Usually worn next to skin, where it absorbs rather than wicks."
+sources:
+  ceiling: [engineer-inference]
+  biological_soil_affinity: [engineer-inference]
+  wears_per_wash_baseline: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

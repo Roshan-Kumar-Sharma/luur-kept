@@ -1,0 +1,36 @@
+id: silk
+display_name: Silk
+class: protein
+properties:
+  max_safe_temp_c: 30
+  agitation_tolerance: very_low
+  shrink_risk: moderate
+  dye_bleed_risk: high
+  odour_retention: moderate
+  pilling_risk: low
+  permitted_drying: [flat_dry_shade]
+  shed_class: low
+  biological_soil_affinity: moderate
+  wet_strength: low
+  sun_sensitivity: high
+ceiling: hand_wash_cold
+professional_route: dry_clean
+wears_per_wash_baseline: 2
+rationale:
+  ceiling: "A protein filament that loses strength wet and is permanently marked by agitation and by wringing."
+  dye_bleed_risk: "Silk is frequently piece-dyed and bleeds readily, particularly in strong colours and the first few washes."
+  odour_retention: "Unlike wool, silk holds body oils, and those oils go on degrading the fibre while the garment sits unwashed."
+  wears_per_wash_baseline: "Worn against skin, silk should be cleaned sooner than its handle suggests, because the damage is done by the residue rather than by the wash."
+  sun_sensitivity: "Silk degrades and yellows under ultraviolet light faster than any other common apparel fibre."
+  wet_strength: "Loses a substantial share of its strength wet; wringing sets permanent creases in the filament."
+sources:
+  ceiling: [engineer-inference, ginetex-symbols]
+  dye_bleed_risk: [engineer-inference]
+  odour_retention: [engineer-inference]
+  wears_per_wash_baseline: [engineer-inference]
+  sun_sensitivity: [engineer-inference]
+  wet_strength: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

@@ -1,0 +1,32 @@
+id: leather
+display_name: Leather
+class: other
+properties:
+  max_safe_temp_c: 0
+  agitation_tolerance: very_low
+  shrink_risk: high
+  dye_bleed_risk: high
+  odour_retention: moderate
+  pilling_risk: none
+  permitted_drying: [flat_dry_shade]
+  shed_class: low
+  biological_soil_affinity: moderate
+  wet_strength: very_low
+  sun_sensitivity: high
+ceiling: brush
+professional_route: dry_clean
+wears_per_wash_baseline: 12
+rationale:
+  ceiling: "No domestic wet process at all. Water stiffens leather as it dries and leaves a permanent tide mark at the edge of the wet area, so even spot cleaning with water does visible harm. Brushing and airing are the whole domestic repertoire; anything beyond that goes to a specialist."
+  max_safe_temp_c: "Recorded as zero because no water temperature is appropriate, not because cold water is fine."
+  wears_per_wash_baseline: "Leather outerwear is rarely next to skin and is not cleaned on a wear count at all — it is cleaned when something has happened to it."
+  sun_sensitivity: "Direct sun dries out and fades leather, and the damage is not reversible by conditioning."
+sources:
+  ceiling: [engineer-inference]
+  max_safe_temp_c: [engineer-inference]
+  wears_per_wash_baseline: [engineer-inference]
+  sun_sensitivity: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

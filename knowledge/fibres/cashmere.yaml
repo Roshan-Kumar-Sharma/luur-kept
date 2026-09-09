@@ -1,0 +1,32 @@
+id: cashmere
+display_name: Cashmere
+class: protein
+properties:
+  max_safe_temp_c: 30
+  agitation_tolerance: very_low
+  shrink_risk: high
+  dye_bleed_risk: moderate
+  odour_retention: very_low
+  pilling_risk: high
+  permitted_drying: [flat_dry_shade]
+  shed_class: moderate
+  biological_soil_affinity: low
+  wet_strength: very_low
+  sun_sensitivity: moderate
+ceiling: hand_wash_cold
+professional_route: dry_clean
+wears_per_wash_baseline: 6
+rationale:
+  ceiling: "Cashmere is a very fine protein fibre with even less tolerance for agitation than sheep's wool. A hot wash is the textbook irreversible mistake."
+  wet_strength: "Extremely weak wet. It must be lifted with both hands and never wrung or hung to drain."
+  pilling_risk: "The fineness that makes cashmere feel as it does is also why it pills at every friction point in the first season."
+  odour_retention: "Shares wool's low odour retention, so airing between wears is usually the whole answer."
+sources:
+  ceiling: [engineer-inference]
+  wet_strength: [engineer-inference]
+  pilling_risk: [engineer-inference]
+  odour_retention: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: medium

@@ -1,0 +1,68 @@
+# How a multi-fibre garment resolves to one set of properties.
+#
+# The rule that matters: SAFETY AND BEHAVIOUR AGGREGATE DIFFERENTLY.
+#
+# Five per cent elastane in a cotton shirt does not make the shirt behave like
+# elastane — but it does mean a hot wash destroys the shirt. So safety fields
+# take the worst case across every declared fibre at any percentage, while
+# behavioural fields are weighted by how much of the garment is actually that
+# fibre. Averaging the safety fields would be the single most dangerous
+# simplification available here, which is why it is called out rather than
+# buried in code.
+
+safety:
+  aggregation: worst_case
+  min_pct_threshold: 0
+  fields:
+    - ceiling
+    - permitted_drying
+    - max_safe_temp_c
+    - agitation_tolerance
+    - shrink_risk
+    - wet_strength
+    - sun_sensitivity
+    - dye_bleed_risk
+  rationale: "The weakest fibre in the blend is what fails, regardless of how little of it there is."
+  sources: [engineer-inference]
+
+behaviour:
+  aggregation: percentage_weighted
+  fields:
+    - odour_retention
+    - shed_class
+    - biological_soil_affinity
+    - pilling_risk
+    - wears_per_wash_baseline
+  dominant_override:
+    min_pct: 40
+    applies_to: [odour_retention]
+    direction: worst_case
+    rationale: "A weighted average would let a merino-majority blend hide a substantial polyester content, and odour is exactly where that hiding does damage. Above forty per cent, the harder-to-shift fibre governs."
+    sources: [engineer-inference]
+  rationale: "How a garment smells, sheds and pills tracks roughly with how much of it is each fibre."
+  sources: [engineer-inference]
+
+# Ordinal scales. Code reads these rather than hard-coding the orderings, so a
+# reviewer can see the whole vocabulary in one place.
+scales:
+  odour_retention: [very_low, low, moderate, high, very_high]
+  shed_class: [low, moderate, high, very_high]
+  agitation_tolerance: [very_low, low, moderate, high]
+  shrink_risk: [none, low, moderate, high]
+  dye_bleed_risk: [none, low, moderate, high]
+  pilling_risk: [none, low, moderate, high]
+  biological_soil_affinity: [low, moderate, high]
+  wet_strength: [very_low, low, moderate, high]
+  sun_sensitivity: [low, moderate, high]
+
+# Which end of each scale is the cautious one, for worst-case aggregation.
+worst_end:
+  odour_retention: high
+  shed_class: high
+  agitation_tolerance: low
+  shrink_risk: high
+  dye_bleed_risk: high
+  pilling_risk: high
+  biological_soil_affinity: high
+  wet_strength: low
+  sun_sensitivity: high

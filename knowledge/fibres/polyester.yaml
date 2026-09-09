@@ -1,0 +1,34 @@
+id: polyester
+display_name: Polyester
+class: synthetic
+properties:
+  max_safe_temp_c: 40
+  agitation_tolerance: high
+  shrink_risk: low
+  dye_bleed_risk: low
+  odour_retention: very_high
+  pilling_risk: high
+  permitted_drying: [line_dry, flat_dry, tumble_low]
+  shed_class: very_high
+  biological_soil_affinity: high
+  wet_strength: high
+  sun_sensitivity: low
+ceiling: machine_wash_warm
+professional_route: none
+wears_per_wash_baseline: 1
+rationale:
+  odour_retention: "The highest of any common fibre, and the exact opposite of wool. Polyester is oil-loving, so body oils bind to the fibre and the odour compounds they carry stay there through gentle treatment. This is why 'wash less' is true of a merino jumper and false of a polyester base layer — the same advice cannot cover both."
+  max_safe_temp_c: "Polyester survives higher temperatures structurally, but heat drives body oils further into the fibre where they set, and hot cycles measurably increase fibre release. The limit here is about outcome, not melting point."
+  shed_class: "Mechanically-treated polyester — fleece and jersey — releases on the order of six times as much fibre as woven filament nylon in washing."
+  pilling_risk: "Strong fibres do not break off when they pill, so polyester pills stay attached and accumulate."
+  wears_per_wash_baseline: "Once odour is established in polyester it does not air out, so the useful window between washes is short."
+sources:
+  odour_retention: [engineer-inference]
+  max_safe_temp_c: [plos-microfibre-2021, engineer-inference]
+  shed_class: [sciencedirect-fabric-shedding, pmc-structure-shedding]
+  pilling_risk: [engineer-inference]
+  wears_per_wash_baseline: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: medium

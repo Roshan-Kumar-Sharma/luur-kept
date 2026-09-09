@@ -1,0 +1,34 @@
+id: cotton
+display_name: Cotton
+class: cellulosic
+properties:
+  max_safe_temp_c: 60
+  agitation_tolerance: high
+  shrink_risk: moderate
+  dye_bleed_risk: moderate
+  odour_retention: moderate
+  pilling_risk: low
+  permitted_drying: [line_dry, flat_dry, tumble_low]
+  shed_class: high
+  biological_soil_affinity: high
+  wet_strength: high
+  sun_sensitivity: moderate
+ceiling: machine_wash_warm
+professional_route: none
+wears_per_wash_baseline: 2
+rationale:
+  ceiling: "Cotton is a robust cellulosic that tolerates normal machine washing."
+  odour_retention: "Cotton absorbs moisture and holds it against the fibre, so odour develops with wear rather than staying on the surface."
+  shed_class: "Natural cellulosics shed substantially in domestic washing, not only synthetics."
+  shrink_risk: "Untreated cotton relaxes and shrinks on first hot wash; the risk falls once it has been washed."
+  wears_per_wash_baseline: "Cotton next to skin holds sweat, so it reaches the point of needing a wash sooner than wool does."
+sources:
+  ceiling: [engineer-inference, ginetex-symbols]
+  odour_retention: [engineer-inference]
+  shed_class: [plos-microfibre-2021, sciencedirect-fabric-shedding]
+  shrink_risk: [engineer-inference]
+  wears_per_wash_baseline: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: medium

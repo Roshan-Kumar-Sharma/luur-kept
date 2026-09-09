@@ -1,0 +1,32 @@
+id: acrylic
+display_name: Acrylic
+class: synthetic
+properties:
+  max_safe_temp_c: 40
+  agitation_tolerance: low
+  shrink_risk: moderate
+  dye_bleed_risk: moderate
+  odour_retention: high
+  pilling_risk: high
+  permitted_drying: [flat_dry]
+  shed_class: high
+  biological_soil_affinity: moderate
+  wet_strength: moderate
+  sun_sensitivity: low
+ceiling: machine_wash_cold_delicate
+professional_route: none
+wears_per_wash_baseline: 3
+rationale:
+  ceiling: "Acrylic softens with heat and takes a permanent set, so garments come back stretched or creased from a warm cycle. Cold and gentle keeps the shape."
+  pilling_risk: "The worst pilling of any common fibre. Acrylic knitwear pills heavily at friction points within a few wears and the pills stay attached."
+  permitted_drying: "Warm air lets acrylic stretch under its own weight; drying flat is the only way to keep a knit the size it started."
+  sun_sensitivity: "Acrylic is unusually stable under ultraviolet light, which is why it is used for outdoor furnishings."
+sources:
+  ceiling: [engineer-inference]
+  pilling_risk: [engineer-inference]
+  permitted_drying: [engineer-inference]
+  sun_sensitivity: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: low

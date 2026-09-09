@@ -1,0 +1,40 @@
+id: merino
+display_name: Merino wool
+class: protein
+properties:
+  max_safe_temp_c: 30
+  agitation_tolerance: very_low
+  shrink_risk: high
+  dye_bleed_risk: moderate
+  odour_retention: very_low
+  pilling_risk: high
+  permitted_drying: [flat_dry_shade]
+  shed_class: moderate
+  biological_soil_affinity: low
+  wet_strength: low
+  sun_sensitivity: moderate
+ceiling: hand_wash_cold
+professional_route: dry_clean
+wears_per_wash_baseline: 7
+unknowns:
+  - id: superwash_treatment
+    ask: "Is this merino superwash-treated? The label will usually say machine washable if so."
+    note: >
+      Superwash merino has had its scale structure treated and many are machine
+      washable. Kept assumes untreated unless told otherwise, because assuming
+      the gentler case costs one hand wash and assuming the wrong one costs the
+      garment.
+rationale:
+  ceiling: "Treated as untreated wool by default. Fine merino felts as readily as coarser wool, and the treatment status is not visible in the garment."
+  odour_retention: "The lowest odour retention of any common apparel fibre. This is the single fact that makes many wears between washes reasonable rather than merely tolerable."
+  wears_per_wash_baseline: "Merino is routinely worn for days between washes without developing odour, which is why it dominates travel and base-layer use."
+  pilling_risk: "Fine merino has short fibres and pills readily at cuffs, underarms and where a bag strap sits."
+sources:
+  ceiling: [engineer-inference]
+  odour_retention: [engineer-inference]
+  wears_per_wash_baseline: [engineer-inference]
+  pilling_risk: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: medium

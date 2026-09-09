@@ -1,0 +1,74 @@
+# What kind of garment it is. Categories adjust the wear budget and carry the
+# defaults that stop the engine having to ask the user things it can reasonably
+# assume. They never raise the ceiling.
+
+categories:
+  tee:
+    label: "T-shirt"
+    wears_multiplier: 0.8
+    typically_next_to_skin: true
+    rationale: "Worn against skin over most of the torso."
+    sources: [engineer-inference]
+
+  shirt:
+    label: "Shirt"
+    wears_multiplier: 1.0
+    typically_next_to_skin: true
+    rationale: "Skin contact concentrated at collar and cuffs, which is also where it fails first."
+    sources: [engineer-inference]
+
+  jeans:
+    label: "Jeans"
+    wears_multiplier: 6.0
+    typically_next_to_skin: false
+    rationale: "Heavy twill worn loose. Washing is what fades and weakens denim, so the interval between washes is long by design rather than by neglect."
+    sources: [engineer-inference]
+
+  knitwear:
+    label: "Knitwear"
+    wears_multiplier: 1.5
+    typically_next_to_skin: false
+    rationale: "Usually worn over another layer, so it takes far less body soil than the layer beneath it."
+    sources: [engineer-inference]
+
+  outerwear:
+    label: "Outerwear"
+    wears_multiplier: 6.0
+    typically_next_to_skin: false
+    rationale: "Rarely in skin contact and cleaned in response to an event rather than on a wear count."
+    sources: [engineer-inference]
+
+  activewear:
+    label: "Activewear"
+    wears_multiplier: 0.25
+    typically_next_to_skin: true
+    min_need_after_wears:
+      wears: 1
+      floor: machine_wash_cold_delicate
+    rationale: "Synthetic, tight, and worn while sweating — the combination that holds odour most stubbornly. This is the category where 'wash less' is the wrong advice, and saying so is more useful than being consistent."
+    sources: [engineer-inference]
+
+  underwear:
+    label: "Underwear"
+    wears_multiplier: 0.2
+    typically_next_to_skin: true
+    min_need_after_wears:
+      wears: 1
+      floor: machine_wash_cold
+    rationale: "Washed after every wear. The engine has no interesting opinion here and should not pretend otherwise."
+    sources: [engineer-inference]
+
+  tailoring:
+    label: "Tailoring"
+    wears_multiplier: 3.0
+    typically_next_to_skin: false
+    typically_structured: true
+    rationale: "Layered construction with interfacing and lining that move differently when wet. Brushing and airing between wears is the actual maintenance; cleaning is occasional and professional."
+    sources: [engineer-inference]
+
+  dress:
+    label: "Dress"
+    wears_multiplier: 1.2
+    typically_next_to_skin: true
+    rationale: "Wide range of constructions, so the fibre and construction layers carry most of the decision."
+    sources: [engineer-inference]

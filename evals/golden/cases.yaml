@@ -1,0 +1,404 @@
+# Golden set. READ evals/golden/PROVENANCE.md BEFORE QUOTING ANY NUMBER FROM THIS.
+#
+# Per labelled situation:
+#   expected_primary  what a careful person should do        -> decision_accuracy, within_one_step
+#   max_safe_action   the most aggressive DOMESTIC action     -> damage_avoidance_recall
+#                     that would not damage this garment.
+#                     Labelled independently of the engine.
+#   wash_required     would a wash genuinely be needed?       -> over_wash_rate
+
+cases:
+  - id: merino-jumper
+    provenance: synthetic_engineer
+    label: "Fine merino crewneck jumper"
+    garment:
+      fibres: [{ fibre: merino, pct: 100 }]
+      construction: knit
+      category: knitwear
+      colour_depth: mid
+    situations:
+      - id: three-wears-clean
+        situation: { wears_since_wash: 3, next_to_skin: false, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: hand_wash_cold
+        wash_required: false
+      - id: eight-wears-smells
+        situation: { wears_since_wash: 8, next_to_skin: true, soil: [body_odour], activity: active }
+        expected_primary: hand_wash_cold
+        max_safe_action: hand_wash_cold
+        wash_required: true
+        note: "Labelled against the brand thesis on purpose. Merino resists odour; it does not defy it."
+      - id: soup-down-the-front
+        situation: { wears_since_wash: 2, next_to_skin: false, soil: [food_grease], activity: sedentary }
+        expected_primary: spot_clean
+        max_safe_action: hand_wash_cold
+        wash_required: false
+
+  - id: cashmere-jumper
+    provenance: synthetic_engineer
+    label: "Cashmere jumper"
+    garment:
+      fibres: [{ fibre: cashmere, pct: 100 }]
+      construction: knit
+      category: knitwear
+      colour_depth: dark
+    situations:
+      - id: two-wears-clean
+        situation: { wears_since_wash: 2, next_to_skin: false, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: hand_wash_cold
+        wash_required: false
+      - id: five-wears-faint-odour
+        situation: { wears_since_wash: 5, next_to_skin: false, soil: [body_odour], activity: sedentary }
+        expected_primary: refresh_spray
+        max_safe_action: hand_wash_cold
+        wash_required: false
+      - id: stain-on-cuff
+        situation: { wears_since_wash: 3, next_to_skin: false, soil: [stain], activity: sedentary }
+        expected_primary: spot_clean
+        max_safe_action: hand_wash_cold
+        wash_required: false
+
+  - id: cotton-tee
+    provenance: synthetic_engineer
+    label: "Plain cotton jersey T-shirt"
+    garment:
+      fibres: [{ fibre: cotton, pct: 100 }]
+      construction: knit
+      sub_construction: jersey
+      category: tee
+      colour_depth: light
+    situations:
+      - id: one-wear-clean
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: machine_wash_warm
+        wash_required: false
+      - id: after-the-gym
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [visible_sweat], activity: workout }
+        expected_primary: machine_wash_cold
+        max_safe_action: machine_wash_warm
+        wash_required: true
+      - id: three-wears-smells
+        situation: { wears_since_wash: 3, next_to_skin: true, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold
+        max_safe_action: machine_wash_warm
+        wash_required: true
+
+  - id: stretch-cotton-tee
+    provenance: synthetic_engineer
+    label: "Dark cotton/elastane T-shirt"
+    garment:
+      fibres: [{ fibre: cotton, pct: 95 }, { fibre: elastane, pct: 5 }]
+      construction: knit
+      sub_construction: jersey
+      category: tee
+      colour_depth: dark
+    situations:
+      - id: one-wear-clean
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: false
+        note: "Five per cent elastane, and it is the elastane that sets the ceiling."
+      - id: sweaty
+        situation: { wears_since_wash: 2, next_to_skin: true, soil: [visible_sweat], activity: active }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+      - id: four-wears-smells
+        situation: { wears_since_wash: 4, next_to_skin: true, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+
+  - id: polyester-fleece
+    provenance: synthetic_engineer
+    label: "Polyester fleece midlayer"
+    garment:
+      fibres: [{ fibre: polyester, pct: 100 }]
+      construction: knit
+      sub_construction: fleece
+      category: outerwear
+      colour_depth: dark
+    situations:
+      - id: two-wears-over-a-base-layer
+        situation: { wears_since_wash: 2, next_to_skin: false, soil: [none], activity: active }
+        expected_primary: air_out
+        max_safe_action: machine_wash_warm
+        wash_required: false
+      - id: five-wears-smells
+        situation: { wears_since_wash: 5, next_to_skin: false, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold
+        max_safe_action: machine_wash_warm
+        wash_required: true
+        note: "Polyester holds odour where wool does not. Airing will not shift this."
+      - id: muddy-walk
+        situation: { wears_since_wash: 3, next_to_skin: false, soil: [outdoor_dust], activity: active }
+        expected_primary: brush
+        max_safe_action: machine_wash_warm
+        wash_required: false
+
+  - id: activewear-leggings
+    provenance: synthetic_engineer
+    label: "Polyester/elastane training leggings"
+    garment:
+      fibres: [{ fibre: polyester, pct: 88 }, { fibre: elastane, pct: 12 }]
+      construction: knit
+      sub_construction: jersey
+      category: activewear
+      colour_depth: dark
+    situations:
+      - id: straight-off-a-workout
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [body_odour, visible_sweat], activity: workout }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+      - id: fresh-from-the-drawer
+        situation: { wears_since_wash: 0, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: wear_again
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: false
+      - id: two-easy-sessions
+        situation: { wears_since_wash: 2, next_to_skin: true, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+
+  - id: silk-blouse
+    provenance: synthetic_engineer
+    label: "Silk satin blouse"
+    garment:
+      fibres: [{ fibre: silk, pct: 100 }]
+      construction: woven
+      sub_construction: satin
+      category: shirt
+      colour_depth: mid
+    situations:
+      - id: one-wear-clean
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: hand_wash_cold
+        wash_required: false
+      - id: warm-day
+        situation: { wears_since_wash: 2, next_to_skin: true, soil: [visible_sweat], activity: sedentary, ambient: hot_humid }
+        expected_primary: hand_wash_cold
+        max_safe_action: hand_wash_cold
+        wash_required: true
+        note: "The machine is out, so hand washing is the answer — not the dry cleaner."
+      - id: makeup-on-the-collar
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [stain], activity: sedentary }
+        expected_primary: spot_clean
+        max_safe_action: hand_wash_cold
+        wash_required: false
+
+  - id: wool-blazer
+    provenance: synthetic_engineer
+    label: "Structured wool blazer, lined, with interfacing"
+    garment:
+      fibres: [{ fibre: wool, pct: 100 }]
+      construction: woven
+      sub_construction: twill
+      category: tailoring
+      structured: true
+      colour_depth: dark
+    situations:
+      - id: three-wears-clean
+        situation: { wears_since_wash: 3, next_to_skin: false, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: spot_clean
+        wash_required: false
+      - id: dusty-commute
+        situation: { wears_since_wash: 5, next_to_skin: false, soil: [outdoor_dust], activity: sedentary }
+        expected_primary: brush
+        max_safe_action: spot_clean
+        wash_required: false
+      - id: wine-on-the-lapel
+        situation: { wears_since_wash: 4, next_to_skin: false, soil: [stain], activity: sedentary }
+        expected_primary: spot_clean
+        max_safe_action: spot_clean
+        wash_required: false
+
+  - id: denim-jeans
+    provenance: synthetic_engineer
+    label: "Heavyweight denim jeans"
+    garment:
+      fibres: [{ fibre: cotton, pct: 100 }]
+      construction: woven
+      sub_construction: denim
+      category: jeans
+      colour_depth: dark
+    situations:
+      - id: five-wears
+        situation: { wears_since_wash: 5, next_to_skin: false, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: machine_wash_cold
+        wash_required: false
+      - id: twelve-wears-smells
+        situation: { wears_since_wash: 12, next_to_skin: false, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold
+        max_safe_action: machine_wash_cold
+        wash_required: true
+      - id: mud-on-the-hem
+        situation: { wears_since_wash: 6, next_to_skin: false, soil: [outdoor_dust], activity: active }
+        expected_primary: brush
+        max_safe_action: machine_wash_cold
+        wash_required: false
+
+  - id: viscose-dress
+    provenance: synthetic_engineer
+    label: "Viscose day dress"
+    garment:
+      fibres: [{ fibre: viscose, pct: 100 }]
+      construction: woven
+      sub_construction: plain
+      category: dress
+      colour_depth: mid
+    situations:
+      - id: one-wear-clean
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: hand_wash_cold
+        wash_required: false
+      - id: two-wears-smells
+        situation: { wears_since_wash: 2, next_to_skin: true, soil: [body_odour], activity: sedentary }
+        expected_primary: hand_wash_cold
+        max_safe_action: hand_wash_cold
+        wash_required: true
+      - id: splash-on-the-skirt
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [food_grease], activity: sedentary }
+        expected_primary: spot_clean
+        max_safe_action: hand_wash_cold
+        wash_required: false
+
+  - id: leather-jacket
+    provenance: synthetic_engineer
+    label: "Leather biker jacket"
+    garment:
+      fibres: [{ fibre: leather, pct: 100 }]
+      construction: leather
+      category: outerwear
+      colour_depth: dark
+    situations:
+      - id: ten-wears
+        situation: { wears_since_wash: 10, next_to_skin: false, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: brush
+        wash_required: false
+      - id: dusty
+        situation: { wears_since_wash: 20, next_to_skin: false, soil: [outdoor_dust], activity: active }
+        expected_primary: brush
+        max_safe_action: brush
+        wash_required: false
+      - id: something-spilled-on-it
+        situation: { wears_since_wash: 12, next_to_skin: false, soil: [stain], activity: sedentary }
+        expected_primary: dry_clean
+        max_safe_action: brush
+        wash_required: false
+        note: "The one case where the right answer is off the domestic ladder entirely."
+
+  - id: lyocell-shirt
+    provenance: synthetic_engineer
+    label: "Lyocell shirt"
+    garment:
+      fibres: [{ fibre: lyocell, pct: 100 }]
+      construction: woven
+      sub_construction: plain
+      category: shirt
+      colour_depth: light
+    situations:
+      - id: one-wear-clean
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: false
+      - id: three-wears-smells
+        situation: { wears_since_wash: 3, next_to_skin: true, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+      - id: sweaty-commute
+        situation: { wears_since_wash: 2, next_to_skin: true, soil: [visible_sweat], activity: active }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+
+  - id: linen-shirt
+    provenance: synthetic_engineer
+    label: "Linen shirt"
+    garment:
+      fibres: [{ fibre: linen, pct: 100 }]
+      construction: woven
+      sub_construction: plain
+      category: shirt
+      colour_depth: light
+    situations:
+      - id: two-wears-clean
+        situation: { wears_since_wash: 2, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: air_out
+        max_safe_action: machine_wash_warm
+        wash_required: false
+      - id: four-wears-smells
+        situation: { wears_since_wash: 4, next_to_skin: true, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold
+        max_safe_action: machine_wash_warm
+        wash_required: true
+      - id: hot-day
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [visible_sweat], activity: active, ambient: hot_humid }
+        expected_primary: machine_wash_cold
+        max_safe_action: machine_wash_warm
+        wash_required: true
+
+  - id: nylon-shell
+    provenance: synthetic_engineer
+    label: "Water-repellent nylon shell jacket"
+    garment:
+      fibres: [{ fibre: nylon, pct: 100 }]
+      construction: woven
+      sub_construction: plain
+      category: outerwear
+      finish: [water_repellent]
+      colour_depth: dark
+    situations:
+      - id: five-wears-clean
+        situation: { wears_since_wash: 5, next_to_skin: false, soil: [none], activity: active }
+        expected_primary: air_out
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: false
+      - id: dusty-hike
+        situation: { wears_since_wash: 8, next_to_skin: false, soil: [outdoor_dust], activity: active }
+        expected_primary: brush
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: false
+      - id: fifteen-wears-smells
+        situation: { wears_since_wash: 15, next_to_skin: false, soil: [body_odour], activity: active }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+
+  - id: modal-underwear
+    provenance: synthetic_engineer
+    label: "Modal/elastane underwear"
+    garment:
+      fibres: [{ fibre: modal, pct: 95 }, { fibre: elastane, pct: 5 }]
+      construction: knit
+      sub_construction: jersey
+      category: underwear
+      colour_depth: mid
+    situations:
+      - id: unworn
+        situation: { wears_since_wash: 0, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: wear_again
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: false
+      - id: one-wear
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [none], activity: sedentary }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true
+        note: "The engine has no interesting opinion here and should not pretend otherwise."
+      - id: one-wear-sweaty
+        situation: { wears_since_wash: 1, next_to_skin: true, soil: [visible_sweat], activity: workout }
+        expected_primary: machine_wash_cold_delicate
+        max_safe_action: machine_wash_cold_delicate
+        wash_required: true

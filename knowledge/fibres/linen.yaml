@@ -1,0 +1,32 @@
+id: linen
+display_name: Linen
+class: cellulosic
+properties:
+  max_safe_temp_c: 60
+  agitation_tolerance: moderate
+  shrink_risk: moderate
+  dye_bleed_risk: low
+  odour_retention: moderate
+  pilling_risk: low
+  permitted_drying: [line_dry, flat_dry]
+  shed_class: moderate
+  biological_soil_affinity: moderate
+  wet_strength: high
+  sun_sensitivity: moderate
+ceiling: machine_wash_warm
+professional_route: none
+wears_per_wash_baseline: 3
+rationale:
+  ceiling: "Linen is strong and gets stronger wet, so it tolerates machine washing; the usual damage is creasing and abrasion at folds, not fibre failure."
+  odour_retention: "Linen is highly breathable and releases moisture quickly, so odour establishes more slowly than in cotton — but it is still an absorbent cellulosic, and worn against skin it takes up sweat like one."
+  agitation_tolerance: "Linen fibres are stiff and abrade at crease lines under heavy agitation."
+  permitted_drying: "Tumble drying accelerates the abrasion at folds that eventually splits linen."
+sources:
+  ceiling: [engineer-inference]
+  odour_retention: [engineer-inference]
+  agitation_tolerance: [engineer-inference]
+  permitted_drying: [engineer-inference]
+provenance:
+  authored_by: engineer
+  reviewed_by: null
+  confidence: medium
