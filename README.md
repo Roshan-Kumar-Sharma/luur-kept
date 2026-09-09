@@ -197,7 +197,7 @@ Runs types, layering, the knowledge lint, the tests and the eval gate.
 | `pnpm kept fibres` | The matrix, and which entries are reviewed |
 | `pnpm lint:knowledge` | Citations, vocabulary, out-of-scope claims |
 | `pnpm evals` | The golden set and the metrics above |
-| `pnpm --filter kept-web dev` | The one-screen web app |
+| `pnpm dev` | The one-screen web app, locally |
 
 **No API key is needed for any of it**, including the tests, the evals and CI.
 The explainer is deterministic by default.
@@ -287,8 +287,8 @@ garment, never sees the situation, and never chooses an action.
 Sprint A is complete: the knowledge base, the engine, the explainer, the CLI,
 the web app, the golden set and the CI gate.
 
-**Not yet deployed.** The demo runs locally; a public URL is the one thing
-standing between this and being sendable.
+**Live at [kept-care.vercel.app](https://kept-care.vercel.app).** Deployed from
+this repository; every push to `main` redeploys.
 
 Sprint B: vision extraction of composition and care symbols from a label
 photograph, brand config YAML with SKU mapping, a shareable result page, and the
