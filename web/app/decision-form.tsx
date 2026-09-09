@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { rephrase, runDecision, type DecideResult } from './actions';
 
 type Option = { id: string; label: string };
@@ -12,142 +12,421 @@ type Vocab = {
   soils: Option[];
 };
 
-const field = 'w-full rounded border border-[var(--color-line)] bg-white px-3 py-2 text-sm';
-const legend = 'text-xs uppercase tracking-[0.14em] text-[var(--color-muted)] mb-3';
+/**
+ * Why each question is being asked.
+ *
+ * Every hint says what the answer changes, not what the field is. Someone
+ * filling this in has no reason to know that construction affects fibre
+ * release — and telling them is the point of the product, so it may as well
+ * start in the form.
+ */
+const SOIL_HINTS: Record<string, string> = {
+  none: 'Just worn. Nothing on it.',
+  body_odour: 'Whether this can be aired out depends entirely on the fibre.',
+  visible_sweat: 'Salts and oils dried into the cloth. Needs water; rarely needs heat.',
+  food_grease: 'Treated where it landed, before anything else.',
+  smoke: 'Absorbed smells usually leave on their own with enough air.',
+  outdoor_dust: 'Sits on the surface. Let it dry first.',
+  stain: 'Never goes in a wash untreated — heat sets it permanently.',
+};
 
 export function DecisionForm({ vocab }: { vocab: Vocab }) {
   const [result, setResult] = useState<DecideResult | null>(null);
-  const [pending, setPending] = useState(false);
+  const [deciding, setDeciding] = useState(false);
   const [prose, setProse] = useState<{ prose: string; model: string } | null>(null);
+  const [rephrasing, setRephrasing] = useState(false);
+  const [rephraseFailed, setRephraseFailed] = useState(false);
 
-  async function onSubmit(formData: FormData) {
-    setPending(true);
+  const [hasSecondFibre, setHasSecondFibre] = useState(false);
+  const [pct1, setPct1] = useState(100);
+  const [pct2, setPct2] = useState(0);
+  const [soils, setSoils] = useState<string[]>(['none']);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  const total = pct1 + (hasSecondFibre ? pct2 : 0);
+
+  function addSecondFibre() {
+    setHasSecondFibre(true);
+    setPct1(95);
+    setPct2(5);
+  }
+
+  function removeSecondFibre() {
+    setHasSecondFibre(false);
+    setPct1(100);
+    setPct2(0);
+  }
+
+  /** "Nothing in particular" cannot coexist with an actual soil. */
+  function toggleSoil(id: string) {
+    setSoils((current) => {
+      if (id === 'none') return ['none'];
+      const without = current.filter((s) => s !== 'none');
+      const next = without.includes(id) ? without.filter((s) => s !== id) : [...without, id];
+      return next.length === 0 ? ['none'] : next;
+    });
+  }
+
+  /**
+   * A plain submit handler, deliberately NOT `<form action={fn}>`.
+   *
+   * React 19 runs a form action inside a transition, and updates made in a
+   * transition are non-urgent: setting a pending flag, awaiting, then clearing
+   * it renders only the final state. The waiting state never appeared on
+   * screen no matter how it was written. An ordinary event handler makes these
+   * updates urgent, so the intermediate state is actually rendered.
+   */
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    // Read before awaiting — currentTarget is nulled once the handler yields.
+    const formData = new FormData(event.currentTarget);
+
+    setDeciding(true);
+    setResult(null);
     setProse(null);
-    const decided = await runDecision(formData);
-    setResult(decided);
-    setPending(false);
+    setRephraseFailed(false);
 
-    // Deliberately after the decision is on screen. The rules have already
-    // answered; this only rewords them, and it must never delay the answer.
+    // Without this the answer renders nearly a thousand pixels above the
+    // button that was just pressed, and nothing appears to happen at all.
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    resultRef.current?.scrollIntoView({
+      behavior: reduced ? 'auto' : 'smooth',
+      block: 'start',
+    });
+
+    // The rules engine answers in well under a millisecond, so on a warm
+    // server the waiting state would otherwise flash past unreadably. This is
+    // not padding for its own sake — a state you cannot see is the same as no
+    // state, which is what it looked like before.
+    const [decided] = await Promise.all([
+      runDecision(formData),
+      new Promise((resolve) => setTimeout(resolve, 450)),
+    ]);
+    setResult(decided);
+    setDeciding(false);
+
+    // Deliberately after the answer is on screen. The rules have already
+    // decided; this only rewords them, and it must never delay the answer.
     if (decided.ok) {
-      void rephrase(formData).then(setProse).catch(() => setProse(null));
+      setRephrasing(true);
+      void rephrase(formData)
+        .then((p) => {
+          setProse(p);
+          setRephraseFailed(p === null);
+        })
+        .catch(() => setRephraseFailed(true))
+        .finally(() => setRephrasing(false));
     }
   }
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-      <form action={onSubmit} className="space-y-7">
-        <fieldset>
-          <div className={legend}>The garment</div>
-          <div className="space-y-3">
+    <div className="grid gap-12 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:gap-16">
+      <form onSubmit={onSubmit}>
+        <Section title="The garment" step="01">
+          <Field
+            label="What is it made of?"
+            hint="Read it off the care label. This is the single biggest input — it sets the most the garment can safely take."
+          >
             <div className="flex gap-2">
-              <select name="fibre1" className={field} defaultValue="merino" required>
+              <select name="fibre1" className="control" defaultValue="merino" required>
                 {vocab.fibres.map((f) => (
                   <option key={f.id} value={f.id}>{f.label}</option>
                 ))}
               </select>
-              <input
-                name="pct1" type="number" min={1} max={100} defaultValue={100}
-                className="w-20 rounded border border-[var(--color-line)] bg-white px-2 py-2 text-sm"
-                aria-label="percentage"
-              />
+              <PercentInput name="pct1" value={pct1} onChange={setPct1} />
             </div>
-            <div className="flex gap-2">
-              <select name="fibre2" className={field} defaultValue="">
-                <option value="">— second fibre (optional) —</option>
-                {vocab.fibres.map((f) => (
-                  <option key={f.id} value={f.id}>{f.label}</option>
-                ))}
-              </select>
-              <input
-                name="pct2" type="number" min={0} max={100} defaultValue={0}
-                className="w-20 rounded border border-[var(--color-line)] bg-white px-2 py-2 text-sm"
-                aria-label="percentage"
-              />
-            </div>
-            <select name="category" className={field} defaultValue="knitwear">
+
+            {hasSecondFibre ? (
+              <>
+                <div className="mt-2 flex gap-2">
+                  <select name="fibre2" className="control" defaultValue="elastane">
+                    {vocab.fibres.map((f) => (
+                      <option key={f.id} value={f.id}>{f.label}</option>
+                    ))}
+                  </select>
+                  <PercentInput name="pct2" value={pct2} onChange={setPct2} />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className={total === 100 ? 'text-[var(--color-faint)]' : 'text-[var(--color-warn)]'}>
+                    {total === 100 ? 'Adds up to 100%.' : `Adds up to ${total}%, not 100%.`}
+                  </span>
+                  <button type="button" className="btn-quiet" onClick={removeSecondFibre}>
+                    Remove
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button type="button" className="btn-quiet mt-2" onClick={addSecondFibre}>
+                + Add a second fibre
+              </button>
+            )}
+          </Field>
+
+          <Field
+            label="What kind of garment is it?"
+            hint="Sets how many wears it normally carries between washes. A blazer and a T-shirt are not on the same schedule."
+          >
+            <select name="category" className="control" defaultValue="knitwear">
               {vocab.categories.map((c) => (
                 <option key={c.id} value={c.id}>{c.label}</option>
               ))}
             </select>
+          </Field>
+
+          <Field
+            label="How is the fabric made?"
+            hint="Knits shed noticeably more fibre than wovens when washed. Leave the second box on “Any” if you're not sure."
+          >
             <div className="flex gap-2">
-              <select name="construction" className={field} defaultValue="knit">
+              <select name="construction" className="control" defaultValue="knit">
                 {vocab.constructions.map((c) => (
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
-              <select name="sub_construction" className={field} defaultValue="">
-                <option value="">— any —</option>
+              <select name="sub_construction" className="control" defaultValue="">
+                <option value="">Any</option>
                 {vocab.subConstructions.map((c) => (
                   <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
             </div>
-            <select name="colour_depth" className={field} defaultValue="mid">
-              <option value="">— colour not given —</option>
+          </Field>
+
+          <Field
+            label="How dark is the colour?"
+            hint="Dark dyes fade unevenly in direct sun, and strong colours can transfer to other garments in the first few washes."
+          >
+            <select name="colour_depth" className="control" defaultValue="mid">
+              <option value="">Not sure</option>
               <option value="white">White</option>
               <option value="light">Light</option>
               <option value="mid">Mid</option>
               <option value="dark">Dark</option>
             </select>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="structured" />
-              Structured — interfacing, shoulder pads or a lining
-            </label>
-          </div>
-        </fieldset>
+          </Field>
 
-        <fieldset>
-          <div className={legend}>What happened to it</div>
-          <div className="space-y-3">
-            <label className="block text-sm">
-              Wears since the last wash
-              <input
-                name="wears" type="number" min={0} max={60} defaultValue={3}
-                className={`${field} mt-1`}
-              />
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="next_to_skin" />
-              Worn against skin
-            </label>
-            <select name="activity" className={field} defaultValue="sedentary">
-              <option value="">— activity not given —</option>
+          <CheckRow
+            name="structured"
+            label="It's structured"
+            hint="Interfacing, shoulder pads or a lining — tailoring, mostly. These layers shrink at different rates, so a wash pulls the shape out permanently."
+          />
+        </Section>
+
+        <Section title="What's happened to it" step="02">
+          <Field
+            label="How many times have you worn it since it was last washed?"
+            hint="Zero if it's straight out of the wash."
+          >
+            <input
+              name="wears"
+              type="number"
+              min={0}
+              max={60}
+              defaultValue={3}
+              className="control"
+              style={{ textAlign: 'left' }}
+            />
+          </Field>
+
+          <CheckRow
+            name="next_to_skin"
+            label="Worn against skin"
+            hint="Skin contact is what puts body oils into the cloth in the first place, so it roughly halves how long a garment goes between washes."
+          />
+
+          <Field
+            label="What was it doing?"
+            hint="Sweat load tracks what you were doing, not how long you wore it."
+          >
+            <select name="activity" className="control" defaultValue="sedentary">
+              <option value="">Not sure</option>
               <option value="sedentary">An ordinary day</option>
-              <option value="active">Active</option>
+              <option value="active">Active — walking, commuting, on your feet</option>
               <option value="workout">A workout</option>
             </select>
-            <div className="space-y-1.5 pt-1">
+          </Field>
+
+          <Field
+            label="Is there anything on it?"
+            hint="Tick everything that applies. What needs removing is what decides the answer."
+          >
+            <div className="space-y-1.5">
               {vocab.soils.map((s) => (
-                <label key={s.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="soil" value={s.id} defaultChecked={s.id === 'none'} />
-                  {s.label}
+                <label key={s.id} className="check-row">
+                  <input
+                    type="checkbox"
+                    name="soil"
+                    value={s.id}
+                    checked={soils.includes(s.id)}
+                    onChange={() => toggleSoil(s.id)}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium leading-tight">{s.label}</span>
+                    <span className="mt-0.5 block text-xs leading-snug text-[var(--color-muted)]">
+                      {SOIL_HINTS[s.id]}
+                    </span>
+                  </span>
                 </label>
               ))}
             </div>
-          </div>
-        </fieldset>
+          </Field>
+        </Section>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded bg-[var(--color-ink)] px-4 py-3 text-sm uppercase tracking-[0.14em] text-[var(--color-paper)] disabled:opacity-50"
-        >
-          {pending ? 'Deciding…' : 'Should I wash it?'}
-        </button>
+        <div className="mt-8">
+          <button type="submit" className="btn-primary" disabled={deciding}>
+            {deciding ? 'Working it out' : 'Should I wash it?'}
+          </button>
+          <p className="mt-3 text-center text-xs text-[var(--color-faint)]">
+            Advisory only, and conservative by design. Nothing is stored.
+          </p>
+        </div>
       </form>
 
-      <div className="min-w-0">
-        {result === null && (
-          <p className="text-sm text-[var(--color-muted)]">
-            Describe a garment and what has happened to it. Kept will tell you the least you can
-            do about it, and show every rule behind that answer.
+      <div ref={resultRef} className="min-w-0 scroll-mt-8">
+        {deciding && <Waiting />}
+        {!deciding && result === null && <EmptyState />}
+        {!deciding && result?.ok === false && (
+          <p className="rounded border border-[var(--color-warn)] bg-white px-4 py-3 text-sm text-[var(--color-warn)]">
+            {result.error}
           </p>
         )}
-        {result?.ok === false && (
-          <p className="text-sm text-[var(--color-warn)]">{result.error}</p>
+        {!deciding && result?.ok && (
+          <Result
+            result={result}
+            prose={prose}
+            rephrasing={rephrasing}
+            rephraseFailed={rephraseFailed}
+          />
         )}
-        {result?.ok && <Result result={result} prose={prose} />}
+      </div>
+    </div>
+  );
+}
+
+/* ── Form primitives ─────────────────────────────────────────────────────── */
+
+function Section({
+  title,
+  step,
+  children,
+}: {
+  title: string;
+  step: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <fieldset className="mb-9">
+      <legend className="mb-5 flex w-full items-baseline gap-3 border-b border-[var(--color-line)] pb-2">
+        <span className="eyebrow">{step}</span>
+        <span className="display text-lg">{title}</span>
+      </legend>
+      <div className="space-y-6">{children}</div>
+    </fieldset>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <span className="q-label">{label}</span>
+      <span className="q-hint">{hint}</span>
+      {children}
+    </div>
+  );
+}
+
+function PercentInput({
+  name,
+  value,
+  onChange,
+}: {
+  name: string;
+  value: number;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <div className="relative w-[86px] flex-none">
+      <input
+        name={name}
+        type="number"
+        min={0}
+        max={100}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="control pr-6"
+        aria-label="percentage"
+      />
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-faint)]">
+        %
+      </span>
+    </div>
+  );
+}
+
+function CheckRow({ name, label, hint }: { name: string; label: string; hint: string }) {
+  const id = useId();
+  return (
+    <label className="check-row" htmlFor={id}>
+      <input id={id} type="checkbox" name={name} />
+      <span>
+        <span className="block text-sm font-medium leading-tight">{label}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-[var(--color-muted)]">{hint}</span>
+      </span>
+    </label>
+  );
+}
+
+/* ── Result pane states ──────────────────────────────────────────────────── */
+
+function EmptyState() {
+  return (
+    <div className="max-w-md rounded-lg border border-dashed border-[var(--color-line-strong)] px-6 py-8">
+      <p className="display text-xl leading-snug">Describe a garment and what has happened to it.</p>
+      <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+        You'll get back the least you can do about it — which is often nothing — along with every
+        rule that produced that answer, an explicit list of what would damage the garment, and how
+        much fibre it would shed if you did wash it.
+      </p>
+      <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
+        The form is already filled in with a merino jumper worn three times. Press the button.
+      </p>
+    </div>
+  );
+}
+
+function Waiting() {
+  return (
+    <div aria-live="polite" aria-busy="true">
+      <p className="mb-6 flex items-center gap-2 text-sm text-[var(--color-muted)]">
+        Working out the least you can do
+        <span aria-hidden className="inline-flex gap-1">
+          <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
+          <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
+          <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
+        </span>
+      </p>
+      <div className="skeleton h-11 w-2/3" />
+      <div className="skeleton mt-3 h-4 w-full max-w-md" />
+      <div className="mt-10 space-y-2">
+        <div className="skeleton h-3 w-14" />
+        <div className="skeleton h-4 w-full max-w-xl" />
+        <div className="skeleton h-4 w-full max-w-lg" />
+        <div className="skeleton h-4 w-2/3 max-w-md" />
+      </div>
+      <div className="mt-8 space-y-2">
+        <div className="skeleton h-3 w-14" />
+        <div className="skeleton h-4 w-full max-w-lg" />
+        <div className="skeleton h-4 w-3/4 max-w-md" />
       </div>
     </div>
   );
@@ -156,111 +435,157 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
 function Result({
   result,
   prose,
+  rephrasing,
+  rephraseFailed,
 }: {
   result: Extract<DecideResult, { ok: true }>;
   prose: { prose: string; model: string } | null;
+  rephrasing: boolean;
+  rephraseFailed: boolean;
 }) {
   const { decision, explanation, labels } = result;
   const name = (id: string) => labels[id] ?? id;
 
   return (
-    <article className="space-y-8">
+    <article className="rise space-y-9">
       <header>
-        <h2 className="text-4xl font-semibold tracking-tight">{explanation.headline}</h2>
-        <p className="mt-2 max-w-prose text-[var(--color-muted)]">{explanation.summary}</p>
-        {prose && (
-          <p className="mt-4 max-w-prose border-l-2 border-[var(--color-line)] pl-4 text-sm leading-relaxed">
-            {prose.prose}
-            <span className="mt-1 block text-[11px] text-[var(--color-muted)]">
-              Reworded by {prose.model}, and checked against the rules that fired. The rules
-              decided; the model only rephrased them.
-            </span>
-          </p>
+        <p className="eyebrow mb-2">The answer</p>
+        <h2 className="display text-4xl leading-tight sm:text-5xl">{explanation.headline}</h2>
+        <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-[var(--color-muted)]">
+          {explanation.summary}
+        </p>
+
+        {(rephrasing || prose || rephraseFailed) && (
+          <div className="mt-5 max-w-prose border-l-2 border-[var(--color-line-strong)] pl-4">
+            {rephrasing && !prose ? (
+              <>
+                <p className="flex items-center gap-2 text-xs text-[var(--color-faint)]">
+                  Putting that in plain words
+                  <span aria-hidden className="inline-flex gap-1">
+                    <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
+                    <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
+                    <span className="dot inline-block h-1 w-1 rounded-full bg-current" />
+                  </span>
+                </p>
+                <div className="skeleton mt-2 h-3.5 w-full" />
+                <div className="skeleton mt-1.5 h-3.5 w-4/5" />
+              </>
+            ) : prose ? (
+              <div className="rise">
+                <p className="text-sm leading-relaxed">{prose.prose}</p>
+                <p className="mt-2 text-[11px] leading-snug text-[var(--color-faint)]">
+                  Reworded by {prose.model}, then checked against the rules that fired. The rules
+                  decided; the model only rephrased them.
+                </p>
+              </div>
+            ) : (
+              /* Saying so beats the block appearing and then vanishing — and
+                 the point it makes is one worth making: nothing was lost. */
+              <p className="rise text-[11px] leading-snug text-[var(--color-faint)]">
+                No plain-language rewording this time — the free model either didn't answer or
+                said something the rules don't support, so it was discarded. The reasoning below
+                is the engine's own and is unaffected.
+              </p>
+            )}
+          </div>
         )}
       </header>
 
       {decision.do_first.length > 0 && (
-        <Section title="First">
-          <ul className="space-y-1 text-sm">
+        <Block title="Do this first">
+          <ul className="space-y-1">
             {decision.do_first.map((a) => (
-              <li key={a}>{name(a)}</li>
+              <li key={a} className="text-sm font-medium">
+                {name(a)}
+              </li>
             ))}
           </ul>
-        </Section>
+        </Block>
       )}
 
-      <Section title="Why">
-        <ul className="space-y-3">
-          {explanation.claims.map((claim) => (
-            <li key={claim.rule_id} className="max-w-prose text-sm leading-relaxed">
-              {claim.text}
-              <span className="ml-2 font-mono text-[11px] text-[var(--color-muted)]">
-                {claim.rule_id}
+      <Block title="Why">
+        <ol className="space-y-4">
+          {explanation.claims.map((claim, i) => (
+            <li key={claim.rule_id} className="flex gap-3">
+              <span className="mt-0.5 flex-none font-mono text-[11px] text-[var(--color-faint)]">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span className="max-w-prose text-sm leading-relaxed">
+                {claim.text}
+                <span className="mt-1 block font-mono text-[11px] text-[var(--color-faint)]">
+                  {claim.rule_id}
+                </span>
               </span>
             </li>
           ))}
-        </ul>
-      </Section>
+        </ol>
+      </Block>
 
       {decision.never_do.length > 0 && (
-        <Section title="Never">
-          <ul className="space-y-3">
+        <Block title="Never">
+          <ul className="space-y-4">
             {decision.never_do.map((c) => (
               <li key={c.rule_id} className="max-w-prose text-sm leading-relaxed">
-                <strong className="text-[var(--color-warn)]">{c.never_do}</strong> {c.because}
-                <span className="ml-2 font-mono text-[11px] text-[var(--color-muted)]">
-                  {c.sources.map((s) => s.id).join(', ')}
+                <strong className="font-semibold text-[var(--color-warn)]">{c.never_do}</strong>{' '}
+                {c.because}
+                <span className="mt-1 block font-mono text-[11px] text-[var(--color-faint)]">
+                  {c.sources.map((s) => s.id).join(' · ')}
                 </span>
               </li>
             ))}
           </ul>
-        </Section>
+        </Block>
       )}
 
       <div className="grid gap-8 sm:grid-cols-2">
-        <Section title="Drying">
+        <Block title="When it's dry">
           <p className="text-sm">{name(decision.drying)}</p>
-        </Section>
-        <Section title="Also fine">
+        </Block>
+        <Block title="Also fine">
           <p className="text-sm">
             {decision.alternatives.length > 0
               ? decision.alternatives.map(name).join(', ')
-              : 'Nothing gentler will do the job.'}
+              : 'Nothing gentler would do the job.'}
           </p>
-        </Section>
+        </Block>
       </div>
 
-      <Section title="Impact — estimates, not measurements">
+      <Block title="Impact — estimates, not measurements">
         <p className="max-w-prose text-sm leading-relaxed">
-          Relative shedding if washed: <strong>{decision.impact_estimate.relative_shedding}</strong>.{' '}
-          {decision.impact_estimate.energy_note}
+          Relative shedding if washed:{' '}
+          <strong className="font-semibold">
+            {decision.impact_estimate.relative_shedding.replace('_', ' ')}
+          </strong>
+          . {decision.impact_estimate.energy_note}
           {decision.impact_estimate.wears_extended_estimate
             ? ` Roughly ${decision.impact_estimate.wears_extended_estimate} more wears before a wash is indicated.`
             : ''}
         </p>
-        <p className="mt-2 max-w-prose text-xs text-[var(--color-muted)]">
+        <p className="mt-2 max-w-prose text-xs leading-relaxed text-[var(--color-faint)]">
           {decision.impact_estimate.method}
         </p>
-      </Section>
+      </Block>
 
       {decision.unknowns.length > 0 && (
-        <Section title="Worth checking">
+        <Block title="Worth checking">
           <ul className="space-y-2">
             {decision.unknowns.map((u) => (
-              <li key={u} className="max-w-prose text-sm text-[var(--color-muted)]">{u}</li>
+              <li key={u} className="max-w-prose text-sm leading-relaxed text-[var(--color-muted)]">
+                {u}
+              </li>
             ))}
           </ul>
-        </Section>
+        </Block>
       )}
 
-      <footer className="border-t border-[var(--color-line)] pt-4 text-xs text-[var(--color-muted)]">
+      <footer className="space-y-2 border-t border-[var(--color-line)] pt-5 text-xs leading-relaxed text-[var(--color-faint)]">
         <p>
           Confidence {decision.confidence}. The most this garment can safely take at home is{' '}
-          <strong>{name(decision.ceiling.action)}</strong>, and nothing above that is ever
-          recommended.
+          <strong className="font-semibold">{name(decision.ceiling.action)}</strong>, and nothing
+          above that is ever recommended.
         </p>
-        <p className="mt-2">
-          Advisory only and conservative by design. When in doubt, follow the garment’s own label.
+        <p>
+          Advisory only and conservative by design. When in doubt, follow the garment's own label.
           Care symbols are described in words here — the official symbol artwork is trademarked and
           is not reproduced.
         </p>
@@ -269,10 +594,10 @@ function Result({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className={legend}>{title}</h3>
+      <h3 className="eyebrow mb-3">{title}</h3>
       {children}
     </section>
   );

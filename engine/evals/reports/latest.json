@@ -6,8 +6,8 @@
     "over_wash_rate": 0.037037037037037035,
     "explanation_faithfulness": 1,
     "cases": 45,
-    "latency_p50_ms": 0.02258399999999483,
-    "latency_p95_ms": 0.07129100000000221,
+    "latency_p50_ms": 0.024332999999998606,
+    "latency_p95_ms": 0.12100000000000932,
     "cost_usd": 0
   },
   "results": [
@@ -397,7 +397,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 1.2955419999999975,
+      "latency_ms": 0.8842089999999985,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -811,7 +811,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.11504100000000506,
+      "latency_ms": 0.12100000000000932,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": false,
@@ -1223,7 +1223,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.07129100000000221,
+      "latency_ms": 0.08029200000000003,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -1594,7 +1594,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.048458999999994035,
+      "latency_ms": 0.05695799999999451,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -1965,7 +1965,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.059499999999999886,
+      "latency_ms": 0.053875000000005,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -2428,7 +2428,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.06666700000000958,
+      "latency_ms": 0.06687500000001023,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -2581,7 +2581,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.06733400000000245,
+      "latency_ms": 0.07012499999999022,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -2754,7 +2754,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.044084000000012225,
+      "latency_ms": 0.04870799999999065,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": false,
@@ -2929,7 +2929,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.04258300000000759,
+      "latency_ms": 0.04216700000000628,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": false,
@@ -3286,7 +3286,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.06270899999999813,
+      "latency_ms": 0.22299999999999898,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -3660,7 +3660,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.028750000000002274,
+      "latency_ms": 0.039499999999989654,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -4036,7 +4036,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.028417000000004577,
+      "latency_ms": 0.03462500000000546,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -4244,7 +4244,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.021833999999998355,
+      "latency_ms": 0.09041600000000471,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -4473,7 +4473,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.017250000000004206,
+      "latency_ms": 0.02795799999999815,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -4681,7 +4681,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.01866700000000776,
+      "latency_ms": 0.02599999999999625,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -5105,7 +5105,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.030499999999989313,
+      "latency_ms": 0.030040999999997098,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -5404,7 +5404,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.020207999999996673,
+      "latency_ms": 0.018583000000006678,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -5788,7 +5788,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.02166599999999619,
+      "latency_ms": 0.02137500000000614,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -6171,7 +6171,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.023625000000009777,
+      "latency_ms": 0.02374999999999261,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -6573,7 +6573,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.023625000000009777,
+      "latency_ms": 0.022582999999997355,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -7048,7 +7048,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.029167000000001053,
+      "latency_ms": 0.027666000000010627,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -7483,7 +7483,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.027207999999987464,
+      "latency_ms": 0.024332999999998606,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -7918,7 +7918,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.018457999999995423,
+      "latency_ms": 0.016708999999991647,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -8442,7 +8442,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.02258399999999483,
+      "latency_ms": 0.019290999999995506,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -8644,7 +8644,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.018041000000010854,
+      "latency_ms": 0.015582999999992353,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -8868,7 +8868,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.01608299999999474,
+      "latency_ms": 0.013958000000002357,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": false,
@@ -9070,7 +9070,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.014499999999998181,
+      "latency_ms": 0.01304100000000119,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -9351,7 +9351,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.018625000000000114,
+      "latency_ms": 0.01604200000001299,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -9632,7 +9632,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.015584000000004039,
+      "latency_ms": 0.013834000000002789,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -9932,7 +9932,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.017166000000003123,
+      "latency_ms": 0.016000000000005343,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -10325,7 +10325,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.02708299999999042,
+      "latency_ms": 0.024832999999986782,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -10716,7 +10716,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.03762499999999136,
+      "latency_ms": 0.016708999999991647,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -11204,7 +11204,7 @@
         },
         "escalated": true
       },
-      "latency_ms": 0.03812499999999375,
+      "latency_ms": 0.038334000000006085,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -11398,7 +11398,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.017750000000006594,
+      "latency_ms": 0.015332999999998265,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -11611,7 +11611,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.015165999999993574,
+      "latency_ms": 0.01795899999999051,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -11822,7 +11822,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.012416999999999234,
+      "latency_ms": 0.015542000000010603,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -11975,7 +11975,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.012500000000002842,
+      "latency_ms": 0.014416999999994573,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -12150,7 +12150,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.016125000000002387,
+      "latency_ms": 0.021791999999990708,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": false,
@@ -12323,7 +12323,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.015166000000007784,
+      "latency_ms": 0.017250000000004206,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": false,
@@ -12666,7 +12666,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.05316700000000196,
+      "latency_ms": 0.045249999999995794,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -13009,7 +13009,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.028874999999999318,
+      "latency_ms": 0.0264580000000052,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -13374,7 +13374,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.015708000000003608,
+      "latency_ms": 0.01870800000000372,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -13746,7 +13746,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.021708000000003835,
+      "latency_ms": 0.02516599999999869,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -14246,7 +14246,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.020541999999991845,
+      "latency_ms": 0.022750000000002046,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
@@ -14722,7 +14722,7 @@
         },
         "escalated": false
       },
-      "latency_ms": 0.018583000000006678,
+      "latency_ms": 0.02087499999998954,
       "faithfulness_violations": 0,
       "exceeded_safe_ceiling": false,
       "exact": true,
