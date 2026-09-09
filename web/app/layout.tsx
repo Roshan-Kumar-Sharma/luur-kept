@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Kept — should you wash it?',
+  title: 'Kept Care — should you wash it?',
   description:
     'A care decision engine for clothes. Fibre, construction and what actually happened to the garment in; a care action with its reasoning out.',
 };

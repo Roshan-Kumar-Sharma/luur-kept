@@ -7,7 +7,7 @@ export default async function Page() {
   return (
     <main className="mx-auto max-w-7xl px-6 py-12 sm:py-16">
       <header className="mb-9">
-        <p className="eyebrow">Kept</p>
+        <p className="eyebrow">Kept Care</p>
         <h1 className="display mt-3 text-3xl leading-[1.15] sm:text-[2.6rem]">
           Should you wash it — or is there a better answer?
         </h1>
