@@ -241,12 +241,17 @@ export function DecisionForm({ vocab }: { vocab: Vocab }) {
             hint="Zero if it has just come out of the wash. This is counted against what the fibre and construction can actually carry, not against a rule of thumb."
           >
             <input
-              type="number"
-              min={0}
-              max={60}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               className="control text-left"
-              value={form.wears}
-              onChange={(e) => set('wears', Number(e.target.value))}
+              value={form.wears === 0 ? '' : String(form.wears)}
+              onChange={(e) => {
+                const raw = e.target.value.replace(/[^0-9]/g, '');
+                if (raw === '') { set('wears', 0); return; }
+                const n = Math.min(60, parseInt(raw, 10));
+                set('wears', n);
+              }}
             />
           </Field>
 
@@ -415,11 +420,16 @@ function Percent({ value, onChange }: { value: number; onChange: (n: number) => 
   return (
     <div className="relative w-[76px] flex-none">
       <input
-        type="number"
-        min={0}
-        max={100}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={value === 0 ? '' : String(value)}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^0-9]/g, '');
+          if (raw === '') { onChange(0); return; }
+          const n = Math.min(100, parseInt(raw, 10));
+          onChange(n);
+        }}
         className="control pr-6"
         aria-label="percentage"
       />

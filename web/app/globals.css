@@ -92,9 +92,7 @@ select.control {
    utilities, since this stylesheet is loaded after the Tailwind layer. */
 .control.is-grow { width: auto; min-width: 0; flex-grow: 1; }
 
-input[type="number"].control { text-align: center; }
-input[type="number"].control::-webkit-outer-spin-button,
-input[type="number"].control::-webkit-inner-spin-button { appearance: none; margin: 0; }
+input[type="text"][inputmode="numeric"].control { text-align: center; }
 
 /* Checkbox rows read as tappable cards rather than loose ticks. */
 .check-row {
